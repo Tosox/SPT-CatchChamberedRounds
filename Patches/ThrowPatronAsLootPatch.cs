@@ -23,8 +23,8 @@ namespace Tosox.CatchChamberedRounds.Patches
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(
-                typeof(WeaponManagerClass),
-                nameof(WeaponManagerClass.ThrowPatronAsLoot)
+                typeof(Firearms),
+                nameof(Firearms.ThrowPatronAsLoot)
             );
         }
 

@@ -1,3 +1,4 @@
+using EFT;
 using EFT.InputSystem;
 using HarmonyLib;
 using SPT.Reflection.Patching;
@@ -18,8 +19,8 @@ namespace Tosox.CatchChamberedRounds.Patches
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(
-                typeof(Class1730),
-                nameof(Class1730.TranslateCommand)
+                typeof(FirearmHandsInputTranslator),
+                nameof(FirearmHandsInputTranslator.TranslateCommand)
             );
         }
 

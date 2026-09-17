@@ -1,3 +1,5 @@
+using Diz.LanguageExtensions;
+using Diz.Utils;
 using EFT.InventoryLogic;
 
 namespace Tosox.CatchChamberedRounds.Helpers
@@ -14,26 +16,26 @@ namespace Tosox.CatchChamberedRounds.Helpers
         /// patron is either still sitting in the chamber slot or already detached, and in
         /// neither case is the weapon a sensible place to prioritise putting it back into.
         /// </summary>
-        private const InteractionsHandlerClass.EMoveItemOrder Order =
-            InteractionsHandlerClass.EMoveItemOrder.UnloadAmmo |
-            InteractionsHandlerClass.EMoveItemOrder.IgnoreItemParent;
+        private const ItemManipulator.EMoveItemOrder Order =
+            ItemManipulator.EMoveItemOrder.UnloadAmmo |
+            ItemManipulator.EMoveItemOrder.IgnoreItemParent;
 
-        internal static GStruct154<GInterface424> Find(Item patron, InventoryController controller, bool simulate)
+        internal static OperationResult<IItemOperationResult> Find(Item patron, InventoryController controller, bool simulate)
         {
             var targets = controller.Inventory.Equipment.ToEnumerable<InventoryEquipment>();
-            return InteractionsHandlerClass.QuickFindAppropriatePlace(patron, controller, targets, Order, simulate);
+            return ItemManipulator.QuickFindAppropriatePlace(patron, controller, targets, Order, simulate);
         }
 
         /// <summary>
         /// The address a simulated placement resolved to, either a free spot or the stack it
         /// would merge into. Used to tell the animator that the round has somewhere to go.
         /// </summary>
-        internal static ItemAddress AddressOf(GInterface424 placement)
+        internal static ItemAddress AddressOf(IItemOperationResult placement)
         {
-            if (placement is GInterface428 move)
+            if (placement is IToEmptyAddressResult move)
                 return move.To;
 
-            if (placement is GInterface429 merge)
+            if (placement is ITransferOrMergeResult merge)
                 return merge.TargetItem?.Parent;
 
             return null;
@@ -76,7 +78,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 if (!container.TryFindLocationForItem(patron, out var address))
                     continue;
 
-                var add = InteractionsHandlerClass.Add(patron, address, controller, false);
+                var add = ItemManipulator.Add(patron, address, controller, false);
                 if (add.Failed || add.Value == null)
                     continue;
 

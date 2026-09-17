@@ -1,5 +1,6 @@
 using Comfort.Common;
 using EFT;
+using EFT.InventoryLogic;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System;
@@ -24,7 +25,7 @@ namespace Tosox.CatchChamberedRounds.Patches
         }
 
         [PatchPrefix]
-        public static bool Prefix(Player.FirearmController __instance, AmmoPackReloadingClass ammoPack, Callback callback)
+        public static bool Prefix(Player.FirearmController __instance, AmmoPack ammoPack, Callback callback)
         {
             try
             {

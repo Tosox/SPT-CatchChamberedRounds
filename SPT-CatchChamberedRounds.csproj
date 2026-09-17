@@ -1,17 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	<TargetFramework>net472</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <OutputType>Library</OutputType>
     <Nullable>disable</Nullable>
     <RootNamespace>Tosox.CatchChamberedRounds</RootNamespace>
     <AssemblyName>Tosox.CatchChamberedRounds</AssemblyName>
-	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Configurations>Debug;Release</Configurations>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <Configurations>Debug;Release</Configurations>
-	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup>
   <ItemGroup>
     <None Include="References\**" />
   </ItemGroup>
@@ -22,13 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Assembly-CSharp" HintPath="References\hollowed.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="References\Assembly-CSharp.dll" Private="false" />
     <Reference Include="Comfort" HintPath="References\Comfort.dll" Private="false" />
     <Reference Include="Sirenix.Serialization" HintPath="References\Sirenix.Serialization.dll" Private="false" />
     <Reference Include="spt-reflection" HintPath="References\spt-reflection.dll" Private="false" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="readme-res\" />
   </ItemGroup>
 </Project>

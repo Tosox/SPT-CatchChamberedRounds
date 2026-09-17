@@ -39,7 +39,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             return true;
         }
 
-        internal static bool TryStart(Player.FirearmController controller, AmmoPackReloadingClass ammoPack, Callback callback)
+        internal static bool TryStart(Player.FirearmController controller, AmmoPack ammoPack, Callback callback)
         {
             // The chained reload must run as vanilla
             if (_chaining || controller == null || ammoPack == null)
@@ -95,7 +95,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (player == null || !ReferenceEquals(player.HandsController, controller))
                 return false;
 
-            if (!(weapon.Chambers[0].ContainedItem is AmmoItemClass chambered) || chambered.IsUsed)
+            if (!(weapon.Chambers[0].ContainedItem is Ammo chambered) || chambered.IsUsed)
                 return false;
 
             var inventory = player.InventoryController;
@@ -125,7 +125,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             // A non-null destination address is what makes the operation raise LoadOne, which
             // is the animator's catch-and-stow variant rather than a plain eject
-            var discharge = controller.InitiateOperation<Player.FirearmController.GClass2024>();
+            var discharge = controller.InitiateOperation<Player.FirearmController.DischargeOperation>();
 
             // Never let a stale bypass from an earlier reload leak into this one
             _bypassArmed = false;
@@ -137,7 +137,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         }
 
         private static void OnDischarged(IResult result, Player.FirearmController controller,
-            InventoryController inventory, Item chambered, AmmoPackReloadingClass ammoPack, Callback callback)
+            InventoryController inventory, Item chambered, AmmoPack ammoPack, Callback callback)
         {
             if (result == null || result.Failed)
             {
@@ -157,7 +157,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback));
         }
 
-        private static IEnumerator ReloadNextFrame(Player.FirearmController controller, AmmoPackReloadingClass ammoPack, Callback callback)
+        private static IEnumerator ReloadNextFrame(Player.FirearmController controller, AmmoPack ammoPack, Callback callback)
         {
             // Let the discharge operation finish unwinding into idle before replacing it
             yield return null;

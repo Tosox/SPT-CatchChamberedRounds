@@ -32,7 +32,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return false;
 
             // Spent casings are litter, not ammo
-            if (patron is AmmoItemClass ammo && ammo.IsUsed)
+            if (patron is Ammo ammo && ammo.IsUsed)
                 return false;
 
             var controller = player.InventoryController;
@@ -64,7 +64,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!Settings.ShowNotification.Value)
                 return;
 
-            NotificationManagerClass.DisplayMessageNotification(
+            NotificationManager.DisplayMessageNotification(
                 message,
                 ENotificationDurationType.Default,
                 ENotificationIconType.Default);
