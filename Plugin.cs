@@ -1,4 +1,5 @@
 using BepInEx;
+using BepInEx.Logging;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Patches;
 
@@ -14,14 +15,24 @@ namespace Tosox.CatchChamberedRounds
 
         internal static Plugin Instance { get; private set; }
 
+        /// <summary>
+        /// BaseUnityPlugin keeps its own logger protected, so it is republished here for the
+        /// helpers that live outside this class.
+        /// </summary>
+        internal static ManualLogSource Log { get; private set; }
+
         public void Awake()
         {
             Instance = this;
+            Log = Logger;
             Settings.Init(Config);
 
             new ThrowPatronAsLootPatch().Enable();
             new ReloadWithAmmoPatch().Enable();
             new QuickReloadCommandPatch().Enable();
+            new OperationFactoryPatch().Enable();
+            new SuppressReloadAnimationPatch().Enable();
+            new SuppressStaleEventsPatch().Enable();
 
             Logger.LogInfo("Plugin loaded successfully");
         }

@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="AnimationSystem.Types" HintPath="References\AnimationSystem.Types.dll" Private="false" />
     <Reference Include="Assembly-CSharp" HintPath="References\Assembly-CSharp.dll" Private="false" />
     <Reference Include="Comfort" HintPath="References\Comfort.dll" Private="false" />
     <Reference Include="Sirenix.Serialization" HintPath="References\Sirenix.Serialization.dll" Private="false" />

@@ -17,7 +17,7 @@ Reloads that cannot achieve anything are also refused. A Mosin holding four roun
 ## ✨ Features
 
 * Keeps the chambered round when reloading internal magazine weapons (Mosin, SKS, ...)
-* Plays the real vanilla catch animation: your character pulls the round out and stows it before working the bolt
+* Plays the real vanilla catch animation, spliced into the reload so there is no bolt closing and reopening in between
 * Keep your Quick reload key for when the round is worth less than the second it costs you
 * Deliberately narrow: nothing else the game throws on the floor is touched, spent casings included
 * Bots are untouched and keep vanilla behaviour
@@ -45,9 +45,11 @@ Settings live under `BepInEx/config/de.tosox.catchchamberedrounds.cfg`, or in th
 
 With **Play Catch Animation** on, reloading a Mosin that still has a round chambered makes your character do what you would do by hand: pull the round out of the chamber and stow it, then reload. That first part is the genuine vanilla animation, the same one you get by dragging the round out of the chamber slot on the inventory screen. Nothing is faked or authored.
 
-The cost is time. You are watching two animations back to back instead of one, so the whole thing takes noticeably longer than a vanilla reload. If that feels sluggish, turn **Play Catch Animation** off: the round is still kept, it just happens silently during the normal reload with no added delay.
+Not every weapon can be spliced. Where the catch never works the bolt, as on the SKS and the SVT, there is nothing to cut away and the two animations play in sequence instead. The round is kept either way.
 
-The two animations genuinely cannot be blended into one. The reload clip drives its own operation through animation events, so forcing the animator into the catch state partway through leaves the reload unable to finish. Playing them in sequence is the honest version.
+The two are spliced together rather than played end to end. Left alone the catch closes the bolt and drops to idle, and the reload then spends its opening half second opening the same bolt again, which costs about a second and a quarter of your character undoing work he has just done. Instead the mod cuts away from the catch just before the bolt starts closing and crossfades straight into the part of the reload that feeds rounds into the magazine. The bolt is already open and the chamber is already empty, so the skipped section had nothing left to do.
+
+You still pay for the catch itself, so the reload is longer than vanilla, just not by as much. If you would rather pay nothing at all, turn off **Play Catch Animation**: the round is still kept, it just happens silently during the normal reload with no added delay.
 
 ## 🏃 Skipping the catch when it matters
 
@@ -85,7 +87,9 @@ Everything happens in `Player.FirearmController.ReloadWithAmmo`, which is prefix
 
 Either way the reload begins with an empty chamber, so it never has anything to throw.
 
-A prefix on `WeaponManagerClass.ThrowPatronAsLoot` sits behind that as a safety net, matched to the one `source` tag the internal magazine reload uses. Almost nothing reaches it in practice, and every other throw the game makes passes straight through untouched.
+A prefix on `Firearms.ThrowPatronAsLoot` sits behind that as a safety net, matched to the one `source` tag the internal magazine reload uses. Almost nothing reaches it in practice, and every other throw the game makes passes straight through untouched.
+
+**The splice** is what joins the two animations. EFT dispatches animation events to whichever operation is current when they fire, not to the one that started the clip, so the catch can hand the weapon over to the reload part way through. Just before the catch closes the bolt, the round is stowed, the discharge is finished by hand, the reload is started with its own trigger suppressed, and the animator is crossfaded into the reload's round-feeding state. The reload's opening section is skipped rather than shortened, because all it does is show the magazine, eject a round that is no longer there, and open a bolt that is already open.
 
 No reload state machine is reimplemented anywhere, and if there is nowhere to put a round the mod stands down at every stage and lets it drop.
 

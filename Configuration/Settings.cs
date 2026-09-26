@@ -5,6 +5,7 @@ namespace Tosox.CatchChamberedRounds.Configuration
     internal static class Settings
     {
         private const string GeneralSection = "1. General";
+        private const string DebugSection = "2. Debug";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> PlayCatchAnimation;
@@ -12,6 +13,8 @@ namespace Tosox.CatchChamberedRounds.Configuration
         internal static ConfigEntry<bool> InvertReloadKeys;
         internal static ConfigEntry<bool> BlockPointlessReloads;
         internal static ConfigEntry<bool> ShowNotification;
+
+        internal static ConfigEntry<bool> VerboseLogging;
 
         internal static void Init(ConfigFile config)
         {
@@ -53,6 +56,13 @@ namespace Tosox.CatchChamberedRounds.Configuration
                     "reloaded in a hurry or because there was nowhere to put it. Silent when the round is caught, since " +
                     "that is the normal outcome and does not need announcing.",
                     null, Order(5)));
+
+            VerboseLogging = config.Bind(DebugSection, "Verbose Logging", false,
+                new ConfigDescription(
+                    "Writes a line to the BepInEx log every time a reload is examined, naming either that the catch " +
+                    "started or the reason it was handed back to vanilla. Turn this on when the catch animation is " +
+                    "not playing and you want to know which check is refusing it.",
+                    null, Order(0)));
         }
 
         /// <summary>
