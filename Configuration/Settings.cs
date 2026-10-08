@@ -65,11 +65,6 @@ namespace Tosox.CatchChamberedRounds.Configuration
                     null, Order(0)));
         }
 
-        /// <summary>
-        /// Configuration Manager sorts a section by descending Order and falls back to
-        /// alphabetical, so counting positions down from a high number keeps the settings on
-        /// screen in the order they are written here.
-        /// </summary>
         private static ConfigurationManagerAttributes Order(int position)
         {
             return new ConfigurationManagerAttributes { Order = short.MaxValue - position };

@@ -11,14 +11,9 @@ namespace Tosox.CatchChamberedRounds
         public const string PluginName = "Catch Chambered Rounds";
         public const string PluginVersion = "1.0.0";
         public const string PluginAuthor = "Tosox";
-        public const string PluginSource = "https://github.com/Tosox/SPT-CatchChamberedRounds";
+        public const string PluginSource = "https://gitlab.com/Tosox/SPT-CatchChamberedRounds";
 
         internal static Plugin Instance { get; private set; }
-
-        /// <summary>
-        /// BaseUnityPlugin keeps its own logger protected, so it is republished here for the
-        /// helpers that live outside this class.
-        /// </summary>
         internal static ManualLogSource Log { get; private set; }
 
         public void Awake()
