@@ -56,4 +56,5 @@ release:
       links:
         - name: $ZIP_NAME
           url: $PACKAGE_URL
+          direct_asset_path: /$ZIP_NAME
           link_type: package
