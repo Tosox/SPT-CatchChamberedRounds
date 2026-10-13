@@ -6,7 +6,7 @@ namespace Tosox.CatchChamberedRounds.Patches
 {
     public class SuppressReloadAnimationPatch : ModulePatch
     {
-        private static bool _skipNext;
+        private static FirearmsAnimator _animator;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -17,23 +17,23 @@ namespace Tosox.CatchChamberedRounds.Patches
             );
         }
 
-        internal static void SkipNext()
+        internal static void SkipNext(FirearmsAnimator animator)
         {
-            _skipNext = true;
+            _animator = animator;
         }
 
         internal static void Clear()
         {
-            _skipNext = false;
+            _animator = null;
         }
 
         [PatchPrefix]
-        public static bool Prefix()
+        public static bool Prefix(FirearmsAnimator __instance)
         {
-            if (!_skipNext)
+            if (_animator == null || !ReferenceEquals(__instance, _animator))
                 return true;
 
-            _skipNext = false;
+            _animator = null;
             return false;
         }
     }

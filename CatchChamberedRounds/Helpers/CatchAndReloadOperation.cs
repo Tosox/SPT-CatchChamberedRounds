@@ -105,6 +105,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
             }
             catch (Exception ex)
             {
+                // Nothing downstream lowers either of these once the splice gave up on itself
+                SuppressReloadAnimationPatch.Clear();
+                SuppressStaleEventsPatch.Clear();
+
                 Plugin.Log.LogError($"Failed to splice the catch into the reload: {ex}");
             }
         }
@@ -128,7 +132,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         private void StartReload()
         {
-            SuppressReloadAnimationPatch.SkipNext();
+            SuppressReloadAnimationPatch.SkipNext(FirearmsAnimator);
             Controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>()
                 .Start(_ammoPack, _reloadCallback);
 
