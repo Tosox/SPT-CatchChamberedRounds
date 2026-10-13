@@ -29,8 +29,13 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         internal static bool Commit(Item patron, InventoryController controller)
         {
+            // Placement helpers all read Item.Parent, which throws instead of returning null.
+            // An owner of its own is what lets this one merge into a stack rather than take a cell.
             if (patron.CurrentAddress == null)
-                return CommitDetached(patron, controller);
+            {
+                var loose = new ItemController(patron, patron.Id, patron.ShortName);
+                patron.CurrentAddress = loose.CreateItemAddress();
+            }
 
             var placement = Find(patron, controller, false);
             if (placement.Failed || placement.Value == null)
@@ -39,27 +44,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             placement.Value.RaiseEvents(controller, CommandStatus.Begin);
             placement.Value.RaiseEvents(controller, CommandStatus.Succeed);
             return true;
-        }
-
-        private static bool CommitDetached(Item patron, InventoryController controller)
-        {
-            var equipment = controller.Inventory.Equipment;
-
-            foreach (var container in equipment.GetPrioritizedContainersForLoot(patron))
-            {
-                if (!container.TryFindLocationForItem(patron, out var address))
-                    continue;
-
-                var add = ItemManipulator.Add(patron, address, controller, false);
-                if (add.Failed || add.Value == null)
-                    continue;
-
-                add.Value.RaiseEvents(controller, CommandStatus.Begin);
-                add.Value.RaiseEvents(controller, CommandStatus.Succeed);
-                return true;
-            }
-
-            return false;
         }
     }
 }
