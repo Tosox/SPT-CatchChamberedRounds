@@ -5,6 +5,7 @@ using EFT.InventoryLogic;
 using System.Collections;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Patches;
+using Tosox.CatchChamberedRounds.Sync;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
@@ -49,6 +50,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (weapon == null || !weapon.MustBoltBeOpennedForInternalReload)
                 return Decline("weapon does not open its bolt for an internal reload");
 
+            var player = controller._player;
+            if (player == null || !player.IsYourPlayer)
+                return Decline($"reload is not the local player's (player={player != null})");
+
             // Puts the animator's LoadOne flag back down, which otherwise stays up for as long as
             // the weapon is in hand and wedges an empty one into an uninterruptible load-a-round loop
             controller.FirearmsAnimator?.LoadOneTrigger(false);
@@ -56,10 +61,13 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!weapon.HasChambers || weapon.ChamberAmmoCount <= 0)
                 return Decline($"nothing chambered (HasChambers={weapon.HasChambers}, ChamberAmmoCount={weapon.ChamberAmmoCount})");
 
+            if (CatchSync.Incompatible)
+                return Decline("another client in the raid handles the chambered round differently");
+
             // Leave vanilla to reject reloads it would not have started anyway
             var magazine = weapon.GetCurrentMagazine();
             if (magazine == null || controller.Blindfire || !controller.CanStartReload())
-                return Decline($"vanilla would not start this reload (magazine={magazine != null}, blindfire={controller.Blindfire}, canStartReload={controller.CanStartReload()})");
+                return Decline($"vanilla would not start this reload (magazine={magazine != null}, blindfire={controller.Blindfire})");
 
             if (magazine.Count >= magazine.MaxCount || ammoPack.AmmoCount <= 0)
             {
@@ -78,10 +86,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 _bypassArmed = true;
                 return Decline($"reload key asked to skip the catch (quickReload={QuickReloadRequested}, invert={Settings.InvertReloadKeys.Value})");
             }
-
-            var player = Singleton<GameWorld>.Instance?.MainPlayer;
-            if (player == null || !ReferenceEquals(player.HandsController, controller))
-                return Decline($"reload is not the main player's (player={player != null}, handsMatch={player != null && ReferenceEquals(player.HandsController, controller)})");
 
             if (!(weapon.Chambers[0].ContainedItem is Ammo chambered) || chambered.IsUsed)
                 return Decline($"chamber holds no live round (contained={weapon.Chambers[0].ContainedItem?.GetType().Name ?? "null"})");
@@ -102,7 +106,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!Settings.PlayCatchAnimation.Value)
             {
                 _bypassArmed = false;
-                InventoryPlacement.Commit(chambered, inventory);
+
+                if (InventoryPlacement.Commit(chambered, inventory))
+                    CatchSync.CatchAnnouncer?.Invoke(player.ProfileId, chambered.Id);
+
                 return Decline("catch animation turned off, round stowed silently");
             }
 
@@ -127,6 +134,9 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             var discharge = controller.InitiateOperation<CatchAndReloadOperation>();
             discharge.StartCatch(chambered, destination, inventory, ammoPack, profile, callback, startCallback);
+
+            // Tell the other clients to catch this round as well
+            CatchSync.CatchAnnouncer?.Invoke(player.ProfileId, chambered.Id);
 
             return true;
         }

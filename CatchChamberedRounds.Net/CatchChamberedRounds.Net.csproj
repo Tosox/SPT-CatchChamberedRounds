@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Tosox.CatchChamberedRounds.Net</RootNamespace>
+    <AssemblyName>Tosox.CatchChamberedRounds.Net</AssemblyName>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Configurations>Debug;Release</Configurations>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\CatchChamberedRounds\ModInfo.cs" Link="ModInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Fika.Core" HintPath="..\References\Fika.Core.dll" Private="false" />
+  </ItemGroup>
+</Project>

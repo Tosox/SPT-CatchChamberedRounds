@@ -7,7 +7,7 @@ stages:
 
 variables:
   BUILD_CONFIGURATION: Release
-  BUILD_OUTPUT: bin/Release
+  BUILD_OUTPUT: CatchChamberedRounds/bin/Release
   PLUGIN_NAME: Tosox.CatchChamberedRounds
   RELEASE_VERSION:
     value: ""

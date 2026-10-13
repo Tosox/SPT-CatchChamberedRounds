@@ -2,6 +2,7 @@ using EFT;
 using EFT.Communications;
 using EFT.InventoryLogic;
 using Tosox.CatchChamberedRounds.Configuration;
+using Tosox.CatchChamberedRounds.Sync;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
@@ -11,11 +12,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         internal static bool TryCatch(Item patron, IPlayer player, string source)
         {
-            if (!Settings.Enabled.Value || patron == null || player == null)
+            if (!Settings.Enabled.Value || CatchSync.Incompatible || patron == null || player == null)
                 return false;
 
-            // Bots and remote players keep vanilla behaviour
-            if (player.IsAI || !player.IsYourPlayer)
+            if (player.IsAi())
                 return false;
 
             if (source != InternalMagBoltOpenSource)
@@ -28,6 +28,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
             var controller = player.InventoryController;
             if (controller?.Inventory?.Equipment == null)
                 return false;
+
+            // Mirrored no matter what this client has configured, otherwise it would drop a round that
+            // the player it belongs to kept
+            if (!player.IsYourPlayer)
+                return CatchSync.TakeAnnouncement(player.ProfileId, patron.Id)
+                    && InventoryPlacement.Commit(patron, controller);
 
             var name = patron.LocalizedName();
 
