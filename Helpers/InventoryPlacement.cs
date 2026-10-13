@@ -31,7 +31,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
         {
             // Placement helpers all read Item.Parent, which throws instead of returning null.
             // An owner of its own is what lets this one merge into a stack rather than take a cell.
-            if (patron.CurrentAddress == null)
+            var original = patron.CurrentAddress;
+            if (original == null)
             {
                 var loose = new ItemController(patron, patron.Id, patron.ShortName);
                 patron.CurrentAddress = loose.CreateItemAddress();
@@ -39,7 +40,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             var placement = Find(patron, controller, false);
             if (placement.Failed || placement.Value == null)
+            {
+                patron.CurrentAddress = original;
                 return false;
+            }
 
             placement.Value.RaiseEvents(controller, CommandStatus.Begin);
             placement.Value.RaiseEvents(controller, CommandStatus.Succeed);
