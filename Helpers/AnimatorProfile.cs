@@ -4,37 +4,20 @@ using UnityEngine;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
-    /// <summary>
-    /// What a weapon's animator says about itself, read out of the baked animation event table it
-    /// carries rather than assumed from state names.
-    ///
-    /// Every state's events, and the normalized time each one fires at, are exactly the numbers
-    /// needed to decide where one animation can be cut and joined to another. Reading them means
-    /// weapons that call the same states different things all work, and so do modded weapons whose
-    /// state names appear in no table anywhere.
-    /// </summary>
     internal class AnimatorProfile
     {
         private const string BoltCloseEvent = "OffBoltCatch";
         private const string FeedRoundEvent = "AddAmmoInMag";
 
-        /// <summary>
-        /// Events and their normalized times, keyed by both the full path hash and the short name
-        /// hash so a state can be found from an <see cref="AnimatorStateInfo"/> either way.
-        /// </summary>
+        // Events and their normalized times, keyed by both the full path hash and the short name hash
         private readonly Dictionary<int, Dictionary<string, float>> _states =
             new Dictionary<int, Dictionary<string, float>>();
 
-        /// <summary>The state that feeds rounds into the magazine, or zero when there is no single one.</summary>
+        // The state that feeds rounds into the magazine or zero when there is no single one
         internal int FeedState { get; private set; }
 
-        /// <summary>Why there is no feed state, for the log. Null when there is one.</summary>
         internal string FeedStateProblem { get; private set; }
 
-        /// <summary>
-        /// Reads the table off an animator. Returns null when there is nothing to read, which is
-        /// every caller's cue to leave the weapon alone rather than guess at it.
-        /// </summary>
         internal static AnimatorProfile Read(Animator animator)
         {
             if (animator == null)
@@ -49,7 +32,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             foreach (var behaviour in behaviours)
             {
-                // A state with no events carries EventsListId -1, and asking for its list makes EFT
+                // A state with no events carries EventsListId -1 and asking for its list makes EFT
                 // log an error of its own, so those are skipped rather than queried
                 if (behaviour == null || behaviour.EventsData == null || behaviour.EventsListId < 0)
                     continue;
@@ -84,7 +67,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             if (feedCandidates != 1)
             {
-                // More than one feeding state means the rule no longer identifies a single answer,
+                // More than one feeding state means the rule no longer identifies a single answer
                 // and guessing between them is worse than playing both animations
                 profile.FeedStateProblem = feedCandidates == 0
                     ? "no state feeds rounds into the magazine"
@@ -96,11 +79,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             return profile;
         }
 
-        /// <summary>
-        /// The moment the state currently playing would close the bolt. A state with no such event
-        /// is not one to cut away from, which is how the semi-automatics opt themselves out: their
-        /// catch never works a bolt, so there is no close to skip.
-        /// </summary>
         internal bool TryGetBoltCloseTime(AnimatorStateInfo state, out float time)
         {
             time = 0f;
@@ -112,10 +90,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             return events.TryGetValue(BoltCloseEvent, out time);
         }
 
-        /// <summary>
-        /// A behaviour names its state by full path, "Hands.RELOAD IN". The animator matches a
-        /// crossfade against the short name, so the layer prefix is dropped before hashing.
-        /// </summary>
         private static int ShortNameHashOf(string fullName)
         {
             if (string.IsNullOrEmpty(fullName))

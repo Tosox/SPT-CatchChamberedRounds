@@ -8,16 +8,6 @@ using Tosox.CatchChamberedRounds.Helpers;
 
 namespace Tosox.CatchChamberedRounds.Patches
 {
-    /// <summary>
-    /// Every place EFT spits a cartridge onto the ground funnels through
-    /// <c>WeaponManagerClass.ThrowPatronAsLoot</c>, and each call site tags itself with a
-    /// distinct <c>source</c> string. Matching on that tag catches the internal magazine
-    /// reload without disturbing any of the other throws, and without reimplementing a
-    /// single one of the reload state machines.
-    ///
-    /// This is the fallback. The reload is normally intercepted before it gets this far, so
-    /// in practice only a round the discharge could not place reaches here.
-    /// </summary>
     public class ThrowPatronAsLootPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

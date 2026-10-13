@@ -7,18 +7,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
 {
     internal static class CartridgeCatcher
     {
-        /// <summary>
-        /// The tag EFT passes to <c>ThrowPatronAsLoot</c> from the internal magazine reload that
-        /// has to open the bolt, which is the Mosin case this mod exists for. Every other throw
-        /// the game makes, spent casings included, is deliberately left alone.
-        /// </summary>
         private const string InternalMagBoltOpenSource = "ReloadInternalMagWithOpenBoltOperation.RemoveAmmoFromChamber";
 
-        /// <summary>
-        /// Tries to stow a cartridge EFT is about to throw on the ground.
-        /// Returns true when the round was placed in the player's gear, in which case
-        /// the caller must suppress the vanilla throw so the round is not duplicated.
-        /// </summary>
         internal static bool TryCatch(Item patron, IPlayer player, string source)
         {
             if (!Settings.Enabled.Value || patron == null || player == null)
@@ -39,7 +29,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (controller?.Inventory?.Equipment == null)
                 return false;
 
-            // Read the name up front, the item may be merged away into an existing stack below
             var name = patron.LocalizedName();
 
             // The player traded this round away for a faster reload
@@ -49,7 +38,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return false;
             }
 
-            // No room anywhere: let it hit the floor rather than vanish
             if (!InventoryPlacement.Commit(patron, controller))
             {
                 Notify($"Dropped {name}, nowhere to stow it");

@@ -9,11 +9,6 @@ using Tosox.CatchChamberedRounds.Helpers;
 
 namespace Tosox.CatchChamberedRounds.Patches
 {
-    /// <summary>
-    /// Intercepts the reload of an internal magazine weapon so the chambered round can be
-    /// pulled out with the vanilla catch animation first. The reload is re-issued once the
-    /// round is stowed, at which point it behaves like a reload of an already empty chamber.
-    /// </summary>
     public class ReloadWithAmmoPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

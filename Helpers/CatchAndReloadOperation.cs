@@ -9,41 +9,9 @@ using UnityEngine;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
-    /// <summary>
-    /// The vanilla chamber discharge, cut short and spliced into the reload.
-    ///
-    /// Left alone the two animations spend about a second and a quarter undoing each other: the
-    /// discharge closes the bolt, drops to idle, and the reload then opens the same bolt again.
-    /// Both halves are redundant once the round is in your pocket and the bolt is already back, so
-    /// this leaves the discharge just before it starts closing and crossfades straight into the
-    /// round-feeding part of the reload.
-    ///
-    /// Nothing about which state or which moment is hardcoded. Every weapon carries its own baked
-    /// animation event table, and the two things the splice needs are read out of it: the bolt
-    /// closes at the discharge's OffBoltCatch, and the state that feeds rounds into the magazine is
-    /// the one that raises AddAmmoInMag. Reading them rather than naming them is what lets this
-    /// work across weapons that call the same states different things, and on modded weapons whose
-    /// state names are in no table at all.
-    ///
-    /// A weapon whose discharge has no OffBoltCatch never splices, which is correct rather than
-    /// merely safe: no bolt closes, so there is nothing to cut away.
-    /// </summary>
     internal class CatchAndReloadOperation : Player.FirearmController.DischargeOperation
     {
-        /// <summary>
-        /// How far before the bolt starts closing to cut away, as a fraction of the catch animation.
-        /// The moment itself is read off each weapon, so this is only the room left in front of it,
-        /// and it wants to be small: the round is in hand from about 0.43 and cutting early enough
-        /// to matter would start hiding the part worth watching. Settled by eye against the Mosin
-        /// at 0.723 and confirmed on the M700, AXMC and TRG, whose bolts close at 0.655.
-        /// </summary>
         private const float BoltCloseMargin = 0.03f;
-
-        /// <summary>
-        /// How long the blend into the reload takes, in normalized time. MagCheckInterrupt uses the
-        /// same figure for the same reason: much more than this and the hands read as skipping ahead
-        /// rather than continuing a motion.
-        /// </summary>
         private const float BlendDuration = 0.10f;
 
         private AmmoPack _ammoPack;
@@ -69,9 +37,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             base.Reset();
         }
 
-        /// <summary>
-        /// Starts the catch, carrying everything the reload will need once the round is stowed.
-        /// </summary>
         internal void StartCatch(Ammo chambered, ItemAddress destination, InventoryController inventory,
             AmmoPack ammoPack, AnimatorProfile profile, Callback callback)
         {
@@ -141,16 +106,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             }
         }
 
-        /// <summary>
-        /// Finishes the discharge by hand, doing what <c>OnMagPuttedToRig</c> would have done at the
-        /// end of the animation minus the two things that would work against the reload: it does not
-        /// hop through Idling, since the reload replaces this operation immediately anyway, and it
-        /// does not call SetCanReload(false), which would stop the feeding state looping before it
-        /// fed a round.
-        ///
-        /// The flag is raised first because leaving the state flushes every event the discharge had
-        /// left, MagHide included, and that must not run the vanilla version on top of this.
-        /// </summary>
         private void EndDischarge()
         {
             _magPuttedToRig = true;
@@ -168,11 +123,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             Firearms.DestroyPatronInWeapon(_chamberIndex);
         }
 
-        /// <summary>
-        /// Starts the vanilla reload with its own animation suppressed, because
-        /// <c>ReloadInternalMagBase.Start</c> fires the Reload trigger unconditionally and that
-        /// would send the animator to the reload's opening state and undo the crossfade.
-        /// </summary>
         private void StartReload()
         {
             SuppressReloadAnimationPatch.SkipNext();
@@ -182,26 +132,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         private void CrossFadeIntoReload(Animator animator)
         {
-            animator.CrossFade(
-                _profile.FeedState,
-                BlendDuration,
-                FirearmsAnimator.HANDS_LAYER_INDEX,
-                0f);
-
-            // Two separate jobs, and dropping the flush only does the first of them. Suppressing
-            // the discharge's leftover OffBoltCatch keeps the animator believing the bolt is open,
-            // which it is, and silences the close nobody can see. But SetBoltCatch also drives
-            // IdlePosition and the weight of the bolt catch layer, and that layer is what actually
-            // holds the bolt open over the top of the blending hands layer. Without something
-            // asserting it, the hands layer blend shows through as the bolt starting to close.
+            animator.CrossFade(_profile.FeedState, BlendDuration, FirearmsAnimator.HANDS_LAYER_INDEX, 0f);
             Plugin.Instance.StartCoroutine(HoldBoltOpenThroughFlush());
         }
 
-        /// <summary>
-        /// Holds the bolt in its open pose across the splice, and lifts the event suppression once
-        /// the flush has been and gone. The flush is queued by the animator and emitted later in the
-        /// frame, so both have to outlive the splice itself by a frame or two.
-        /// </summary>
         private System.Collections.IEnumerator HoldBoltOpenThroughFlush()
         {
             for (var frame = 0; frame < 2; frame++)
@@ -215,9 +149,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             SuppressStaleEventsPatch.Clear();
         }
 
-        /// <summary>
-        /// The sequential path, still in place for when the splice is off, refused, or impossible.
-        /// </summary>
         private void OnDischargeFinished(IResult result)
         {
             if (_spliced)
