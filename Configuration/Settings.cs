@@ -19,49 +19,31 @@ namespace Tosox.CatchChamberedRounds.Configuration
         internal static void Init(ConfigFile config)
         {
             Enabled = config.Bind(GeneralSection, "Enabled", true,
-                new ConfigDescription(
-                    "Master switch. When off, the chambered round drops on the floor like vanilla.",
+                new ConfigDescription("Untick to disable catching the chambered round",
                     null, Order(0)));
 
             PlayCatchAnimation = config.Bind(GeneralSection, "Play Catch Animation", true,
-                new ConfigDescription(
-                    "Pull the chambered round out with the vanilla catch animation before reloading an internal magazine weapon. " +
-                    "This looks better but adds the length of that animation to the reload. Turn off to keep the round silently with no extra delay.",
+                new ConfigDescription("Pull the round out with a catch animation instead of stowing it silently",
                     null, Order(1)));
 
-            QuickReloadBypass = config.Bind(GeneralSection, "Quick Reload Skips The Catch", true,
-                new ConfigDescription(
-                    "Using Tarkov's Quick reload key skips the catch animation entirely and reloads at full vanilla speed, " +
-                    "throwing the chambered round on the floor. Your emergency out when someone is pushing you. " +
-                    "Requires Quick reload to be bound under Settings > Controls.",
+            QuickReloadBypass = config.Bind(GeneralSection, "Quick Reload Skips the Catch", true,
+                new ConfigDescription("Let a quick reload skip the catch and reload normally",
                     null, Order(2)));
 
             InvertReloadKeys = config.Bind(GeneralSection, "Invert Reload Keys", false,
-                new ConfigDescription(
-                    "Swap the two keys around: the normal reload becomes the fast vanilla one that drops the round, " +
-                    "and Quick reload becomes the one that catches it. Needs 'Quick Reload Skips The Catch' enabled, " +
-                    "and note that with nothing bound to Quick reload this leaves you no way to catch the round at all.",
+                new ConfigDescription("Swap the keys, so the normal reload drops the round and quick reload catches it",
                     null, Order(3)));
 
             BlockPointlessReloads = config.Bind(GeneralSection, "Block Pointless Reloads", true,
-                new ConfigDescription(
-                    "Refuse a reload that cannot add anything. Four rounds in the magazine and one chambered is already " +
-                    "the five a reload would leave you with, so it would only swap the chambered round for another one " +
-                    "out of your gear. Turn off if you would rather reload anyway.",
+                new ConfigDescription("Refuse a reload that cannot add any rounds",
                     null, Order(4)));
 
-            ShowNotification = config.Bind(GeneralSection, "Notify When A Round Drops", false,
-                new ConfigDescription(
-                    "Show a message when a live round ends up on the floor instead of in your gear, either because you " +
-                    "reloaded in a hurry or because there was nowhere to put it. Silent when the round is caught, since " +
-                    "that is the normal outcome and does not need announcing.",
+            ShowNotification = config.Bind(GeneralSection, "Notify When a Round Drops", false,
+                new ConfigDescription("Display a notification when a round is dropped instead of caught",
                     null, Order(5)));
 
             VerboseLogging = config.Bind(DebugSection, "Verbose Logging", false,
-                new ConfigDescription(
-                    "Writes a line to the BepInEx log every time a reload is examined, naming either that the catch " +
-                    "started or the reason it was handed back to vanilla. Turn this on when the catch animation is " +
-                    "not playing and you want to know which check is refusing it.",
+                new ConfigDescription("Write additional details to the log for troubleshooting",
                     null, Order(0)));
         }
 
