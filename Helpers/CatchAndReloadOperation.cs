@@ -16,6 +16,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         private AmmoPack _ammoPack;
         private Callback _reloadCallback;
+        private Callback _reloadStartCallback;
         private InventoryController _inventory;
         private Item _chambered;
         private bool _spliced;
@@ -30,6 +31,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         {
             _ammoPack = null;
             _reloadCallback = null;
+            _reloadStartCallback = null;
             _inventory = null;
             _chambered = null;
             _spliced = false;
@@ -38,11 +40,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
         }
 
         internal void StartCatch(Ammo chambered, ItemAddress destination, InventoryController inventory,
-            AmmoPack ammoPack, AnimatorProfile profile, Callback callback)
+            AmmoPack ammoPack, AnimatorProfile profile, Callback callback, Callback startCallback)
         {
             _profile = profile;
             _ammoPack = ammoPack;
             _reloadCallback = callback;
+            _reloadStartCallback = startCallback;
             _inventory = inventory;
             _chambered = chambered;
             _spliced = false;
@@ -128,6 +131,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
             SuppressReloadAnimationPatch.SkipNext();
             Controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>()
                 .Start(_ammoPack, _reloadCallback);
+
+            // Vanilla raises this once the reload is under way and leaves it null, Fika hangs the
+            // packet that replays the reload on the other clients off it
+            _reloadStartCallback?.Succeed();
         }
 
         private void CrossFadeIntoReload(Animator animator)

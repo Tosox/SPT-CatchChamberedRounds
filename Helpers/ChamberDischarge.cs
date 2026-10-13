@@ -32,7 +32,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             return false;
         }
 
-        internal static bool TryStart(Player.FirearmController controller, AmmoPack ammoPack, Callback callback)
+        internal static bool TryStart(Player.FirearmController controller, AmmoPack ammoPack, Callback callback,
+                                      Callback startCallback)
         {
             if (!Settings.Enabled.Value)
                 return false;
@@ -125,7 +126,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 Plugin.Log.LogInfo($"Catch starting: discharging {chambered.LocalizedName()} to {destination}");
 
             var discharge = controller.InitiateOperation<CatchAndReloadOperation>();
-            discharge.StartCatch(chambered, destination, inventory, ammoPack, profile, callback);
+            discharge.StartCatch(chambered, destination, inventory, ammoPack, profile, callback, startCallback);
 
             return true;
         }

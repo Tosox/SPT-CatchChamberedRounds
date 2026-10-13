@@ -24,6 +24,7 @@ namespace Tosox.CatchChamberedRounds
 
             new ThrowPatronAsLootPatch().Enable();
             new ReloadWithAmmoPatch().Enable();
+            new PlannedReloadPatch().Enable();
             new QuickReloadCommandPatch().Enable();
             new OperationFactoryPatch().Enable();
             new SuppressReloadAnimationPatch().Enable();
