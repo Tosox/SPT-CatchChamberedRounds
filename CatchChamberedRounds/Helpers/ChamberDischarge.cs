@@ -46,14 +46,13 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (controller == null || ammoPack == null)
                 return Decline("no controller or no ammo pack");
 
-            // Only the weapons whose reload opens the bolt and spits the chambered round out
-            var weapon = controller.Item;
-            if (weapon == null || !weapon.MustBoltBeOpennedForInternalReload)
-                return Decline("weapon does not open its bolt for an internal reload");
-
             var player = controller._player;
             if (player == null || !player.IsYourPlayer)
                 return Decline($"reload is not the local player's (player={player != null})");
+
+            var weapon = controller.Item;
+            if (weapon == null || !weapon.MustBoltBeOpennedForInternalReload)
+                return Decline("weapon does not open its bolt for an internal reload");
 
             // Puts the animator's LoadOne flag back down, which otherwise stays up for as long as
             // the weapon is in hand and wedges an empty one into an uninterruptible load-a-round loop
