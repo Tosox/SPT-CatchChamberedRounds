@@ -22,6 +22,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private InventoryController _inventory;
         private Item _chambered;
         private bool _spliced;
+        private bool _spliceAttempted;
 
         private AnimatorProfile _profile;
 
@@ -37,8 +38,17 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _inventory = null;
             _chambered = null;
             _spliced = false;
+            _spliceAttempted = false;
             _profile = null;
             base.Reset();
+        }
+
+        public override void OnEnd()
+        {
+            // Nothing else puts the flag this operation raised back down once the weapon is someone
+            // else's problem and left up it wedges an empty one into a load-a-round loop
+            Controller?.FirearmsAnimator?.LoadOneTrigger(false);
+            base.OnEnd();
         }
 
         internal void StartCatch(Ammo chambered, ItemAddress destination, InventoryController inventory,
@@ -51,6 +61,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _inventory = inventory;
             _chambered = chambered;
             _spliced = false;
+            _spliceAttempted = false;
 
             Start(chambered, 0, destination, new Callback(OnDischargeFinished));
         }
@@ -59,7 +70,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         {
             base.Update(deltaTime);
 
-            if (_spliced || _profile == null || _profile.FeedState == 0 || State != Player.EOperationState.Executing)
+            if (_spliceAttempted || _profile == null || _profile.FeedState == 0 || State != Player.EOperationState.Executing)
                 return;
 
             var animator = ResolveAnimator();
@@ -80,7 +91,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         private void Splice(Animator animator, int leavingState, float normalizedTime)
         {
-            _spliced = true;
+            // One go either way, so a refusal does not come back every frame
+            _spliceAttempted = true;
 
             try
             {
@@ -93,6 +105,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
                     Plugin.Log.LogWarning("No room for the chambered round at the splice, letting the catch finish");
                     return;
                 }
+
+                _spliced = true;
 
                 // Armed before anything else moves, because the flush lands as soon as the
                 // crossfade starts and the whole point is to be ready for it
