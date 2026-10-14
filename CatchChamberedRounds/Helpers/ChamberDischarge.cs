@@ -2,6 +2,7 @@ using AnimationSystem;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
+using System;
 using System.Collections;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Patches;
@@ -139,7 +140,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
         }
 
         internal static void ChainReload(IResult result, Player.FirearmController controller, InventoryController inventory,
-                                         Item chambered, AmmoPack ammoPack, Callback callback)
+                                         Item chambered, AmmoPack ammoPack, Callback callback,
+                                         Action onHidden, bool fastHide)
         {
             // The catch is done and a reload follows instead of the chambering that would normally
             // lower the flag and the reload drives its own trigger without ever touching this one
@@ -150,6 +152,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 _bypassArmed = false;
                 Plugin.Log.LogWarning($"Chamber discharge did not complete: {result?.Error?.ToString() ?? "no result"}");
                 callback?.Fail("Chamber discharge did not complete");
+                HandOverHide(controller, onHidden, fastHide);
                 return;
             }
 
@@ -161,16 +164,26 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!InventoryPlacement.Commit(chambered, inventory))
             {
                 callback?.Fail("No room left for the chambered round");
+                HandOverHide(controller, onHidden, fastHide);
                 return;
             }
 
             // Tell the other clients to catch this round as well
             CatchSync.CatchAnnouncer?.Invoke(controller._player.ProfileId, chambered.Id);
 
-            Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback));
+            Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback, onHidden, fastHide));
         }
 
-        private static IEnumerator ReloadNextFrame(Player.FirearmController controller, AmmoPack ammoPack, Callback callback)
+        private static void HandOverHide(Player.FirearmController controller, Action onHidden, bool fastHide)
+        {
+            if (onHidden == null)
+                return;
+
+            controller?.CurrentOperation?.HideWeapon(onHidden, fastHide);
+        }
+
+        private static IEnumerator ReloadNextFrame(Player.FirearmController controller, AmmoPack ammoPack, Callback callback,
+                                                   Action onHidden, bool fastHide)
         {
             // Let the discharge operation finish unwinding into idle before replacing it
             yield return null;
@@ -184,6 +197,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             {
                 _chaining = false;
             }
+
+            HandOverHide(controller, onHidden, fastHide);
         }
     }
 }

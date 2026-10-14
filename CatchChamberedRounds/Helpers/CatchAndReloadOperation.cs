@@ -24,6 +24,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private Item _chambered;
         private bool _spliced;
         private bool _spliceAttempted;
+        private Action _hideAction;
+        private bool _fastHide;
 
         private AnimatorProfile _profile;
 
@@ -40,8 +42,16 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _chambered = null;
             _spliced = false;
             _spliceAttempted = false;
+            _hideAction = null;
+            _fastHide = false;
             _profile = null;
             base.Reset();
+        }
+
+        public override void HideWeapon(Action onHidden, bool fastDrop, Item nextControllerItem = null)
+        {
+            _hideAction = onHidden;
+            _fastHide = fastDrop;
         }
 
         public override void OnEnd()
@@ -130,6 +140,11 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 SuppressStaleEventsPatch.Clear();
 
                 Plugin.Log.LogError($"Failed to splice the catch into the reload: {ex}");
+
+                // No reload took the pending weapon swap off our hands and dropping it leaves them
+                // busy for good, so idle takes it instead
+                if (_hideAction != null)
+                    Controller.InitiateOperation<Player.FirearmController.Idling>().HideWeapon(_hideAction, _fastHide);
             }
         }
 
@@ -153,12 +168,19 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private void StartReload()
         {
             SuppressReloadAnimationPatch.SkipNext(FirearmsAnimator);
-            Controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>()
-                .Start(_ammoPack, _reloadCallback);
+
+            var reload = Controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>();
+            reload.Start(_ammoPack, _reloadCallback);
 
             // Vanilla raises this once the reload is under way and leaves it null, Fika hangs the
             // packet that replays the reload on the other clients off it
             _reloadStartCallback?.Succeed();
+
+            if (_hideAction != null)
+            {
+                reload.HideWeapon(_hideAction, _fastHide);
+                _hideAction = null;
+            }
         }
 
         private void CrossFadeIntoReload(Animator animator, int leavingState)
@@ -190,7 +212,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (_spliced)
                 return;
 
-            ChamberDischarge.ChainReload(result, Controller, _inventory, _chambered, _ammoPack, _reloadCallback);
+            ChamberDischarge.ChainReload(result, Controller, _inventory, _chambered, _ammoPack, _reloadCallback,
+                _hideAction, _fastHide);
         }
 
         private Animator ResolveAnimator()
