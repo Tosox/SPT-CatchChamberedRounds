@@ -3,6 +3,7 @@ using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using System;
+using System.Collections;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Patches;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
     {
         private const float BoltCloseMargin = 0.03f;
         private const float BlendDuration = 0.10f;
+        private const int MaxFlushFrames = 12;
 
         private AmmoPack _ammoPack;
         private Callback _reloadCallback;
@@ -98,7 +100,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
                 EndDischarge();
                 StartReload();
-                CrossFadeIntoReload(animator);
+                CrossFadeIntoReload(animator, leavingState);
 
                 if (Settings.VerboseLogging.Value)
                     Plugin.Log.LogInfo($"Spliced catch into reload at nt {normalizedTime:F3}");
@@ -141,20 +143,25 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _reloadStartCallback?.Succeed();
         }
 
-        private void CrossFadeIntoReload(Animator animator)
+        private void CrossFadeIntoReload(Animator animator, int leavingState)
         {
             animator.CrossFade(_profile.FeedState, BlendDuration, FirearmsAnimator.HANDS_LAYER_INDEX, 0f);
-            Plugin.Instance.StartCoroutine(HoldBoltOpenThroughFlush());
+            Plugin.Instance.StartCoroutine(HoldBoltOpenThroughFlush(leavingState));
         }
 
-        private System.Collections.IEnumerator HoldBoltOpenThroughFlush()
+        private IEnumerator HoldBoltOpenThroughFlush(int leavingState)
         {
-            for (var frame = 0; frame < 2; frame++)
+            for (var frame = 0; frame < MaxFlushFrames; frame++)
             {
                 if (Controller?.FirearmsAnimator != null)
                     Controller.FirearmsAnimator.SetBoltCatch(true);
 
                 yield return null;
+
+                var animator = ResolveAnimator();
+                if (animator == null ||
+                    animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash != leavingState)
+                    break;
             }
 
             SuppressStaleEventsPatch.Clear();
