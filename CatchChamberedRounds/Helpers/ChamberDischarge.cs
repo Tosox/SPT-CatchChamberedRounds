@@ -135,9 +135,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             var discharge = controller.InitiateOperation<CatchAndReloadOperation>();
             discharge.StartCatch(chambered, destination, inventory, ammoPack, profile, callback, startCallback);
 
-            // Tell the other clients to catch this round as well
-            CatchSync.CatchAnnouncer?.Invoke(player.ProfileId, chambered.Id);
-
             return true;
         }
 
@@ -166,6 +163,9 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 callback?.Fail("No room left for the chambered round");
                 return;
             }
+
+            // Tell the other clients to catch this round as well
+            CatchSync.CatchAnnouncer?.Invoke(controller._player.ProfileId, chambered.Id);
 
             Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback));
         }

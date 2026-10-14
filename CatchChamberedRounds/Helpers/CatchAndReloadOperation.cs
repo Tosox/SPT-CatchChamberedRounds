@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Patches;
+using Tosox.CatchChamberedRounds.Sync;
 using UnityEngine;
 
 namespace Tosox.CatchChamberedRounds.Helpers
@@ -107,6 +108,9 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 }
 
                 _spliced = true;
+
+                // Tell the other clients to catch this round as well
+                CatchSync.CatchAnnouncer?.Invoke(Controller._player.ProfileId, _chambered.Id);
 
                 // Armed before anything else moves, because the flush lands as soon as the
                 // crossfade starts and the whole point is to be ready for it
