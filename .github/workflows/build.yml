@@ -39,5 +39,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: SPT-CatchChamberedRounds
-        path: bin/${{ env.BUILD_CONFIGURATION }}/*
+        path: CatchChamberedRounds/bin/${{ env.BUILD_CONFIGURATION }}/*
         retention-days: 1

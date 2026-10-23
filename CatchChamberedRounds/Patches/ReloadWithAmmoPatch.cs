@@ -1,5 +1,6 @@
 using Comfort.Common;
 using EFT;
+using EFT.InventoryLogic;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System;
@@ -8,28 +9,25 @@ using Tosox.CatchChamberedRounds.Helpers;
 
 namespace Tosox.CatchChamberedRounds.Patches
 {
-    /// <summary>
-    /// Intercepts the reload of an internal magazine weapon so the chambered round can be
-    /// pulled out with the vanilla catch animation first. The reload is re-issued once the
-    /// round is stowed, at which point it behaves like a reload of an already empty chamber.
-    /// </summary>
     public class ReloadWithAmmoPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(
-                typeof(Player.FirearmController),
-                nameof(Player.FirearmController.ReloadWithAmmo)
+                typeof(Player.FirearmController.Idling),
+                nameof(Player.FirearmController.Idling.ReloadWithAmmo),
+                new[] { typeof(AmmoPack), typeof(Callback), typeof(Callback) }
             );
         }
 
         [PatchPrefix]
-        public static bool Prefix(Player.FirearmController __instance, AmmoPackReloadingClass ammoPack, Callback callback)
+        public static bool Prefix(Player.FirearmController.Idling __instance, AmmoPack ammoPack,
+                                 Callback finishCallback, Callback startCallback)
         {
             try
             {
                 // Skip the vanilla reload only while the discharge animation is taking over
-                return !ChamberDischarge.TryStart(__instance, ammoPack, callback);
+                return !ChamberDischarge.TryStart(__instance.Controller, ammoPack, finishCallback, startCallback);
             }
             catch (Exception ex)
             {
