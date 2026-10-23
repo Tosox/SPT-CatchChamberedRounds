@@ -74,10 +74,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return true;
             }
 
-            if (Settings.QuickReloadBypass.Value && QuickReloadRequested != Settings.InvertReloadKeys.Value)
+            if (QuickReloadRequested != Settings.CatchOnQuickReload.Value)
             {
                 _bypassArmed = true;
-                return Decline($"reload key asked to skip the catch (quickReload={QuickReloadRequested}, invert={Settings.InvertReloadKeys.Value})");
+                return Decline($"reload key asked to skip the catch (quickReload={QuickReloadRequested}, catchOnQuickReload={Settings.CatchOnQuickReload.Value})");
             }
 
             if (!(weapon.Chambers[0].ContainedItem is Ammo chambered) || chambered.IsUsed)

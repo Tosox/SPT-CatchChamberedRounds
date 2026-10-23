@@ -25,8 +25,7 @@
 | --- | --- | --- |
 | `Enabled` | `true` | Untick to disable catching the chambered round |
 | `Play Catch Animation` | `true` | Pull the round out with a catch animation instead of stowing it silently |
-| `Quick Reload Skips the Catch` | `true` | Let a quick reload skip the catch and reload normally |
-| `Invert Reload Keys` | `false` | Swap the keys, so the normal reload drops the round and quick reload catches it |
+| `Catch on Quick Reload Instead` | `false` | Catch the round on a quick reload and drop it on a normal reload |
 | `Block Pointless Reloads` | `true` | Refuse a reload that cannot add any rounds |
 | `Verbose Logging` | `false` | Write additional details to the log for troubleshooting |
 

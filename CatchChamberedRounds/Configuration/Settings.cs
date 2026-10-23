@@ -9,8 +9,7 @@ namespace Tosox.CatchChamberedRounds.Configuration
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> PlayCatchAnimation;
-        internal static ConfigEntry<bool> QuickReloadBypass;
-        internal static ConfigEntry<bool> InvertReloadKeys;
+        internal static ConfigEntry<bool> CatchOnQuickReload;
         internal static ConfigEntry<bool> BlockPointlessReloads;
 
         internal static ConfigEntry<bool> VerboseLogging;
@@ -25,17 +24,13 @@ namespace Tosox.CatchChamberedRounds.Configuration
                 new ConfigDescription("Pull the round out with a catch animation instead of stowing it silently",
                     null, Order(1)));
 
-            QuickReloadBypass = config.Bind(GeneralSection, "Quick Reload Skips the Catch", true,
-                new ConfigDescription("Let a quick reload skip the catch and reload normally",
+            CatchOnQuickReload = config.Bind(GeneralSection, "Catch on Quick Reload Instead", false,
+                new ConfigDescription("Catch the round on a quick reload and drop it on a normal reload",
                     null, Order(2)));
-
-            InvertReloadKeys = config.Bind(GeneralSection, "Invert Reload Keys", false,
-                new ConfigDescription("Swap the keys, so the normal reload drops the round and quick reload catches it",
-                    null, Order(3)));
 
             BlockPointlessReloads = config.Bind(GeneralSection, "Block Pointless Reloads", true,
                 new ConfigDescription("Refuse a reload that cannot add any rounds",
-                    null, Order(4)));
+                    null, Order(3)));
 
             VerboseLogging = config.Bind(DebugSection, "Verbose Logging", false,
                 new ConfigDescription("Write additional details to the log for troubleshooting",
