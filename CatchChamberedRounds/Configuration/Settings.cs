@@ -12,7 +12,6 @@ namespace Tosox.CatchChamberedRounds.Configuration
         internal static ConfigEntry<bool> QuickReloadBypass;
         internal static ConfigEntry<bool> InvertReloadKeys;
         internal static ConfigEntry<bool> BlockPointlessReloads;
-        internal static ConfigEntry<bool> ShowNotification;
 
         internal static ConfigEntry<bool> VerboseLogging;
 
@@ -37,10 +36,6 @@ namespace Tosox.CatchChamberedRounds.Configuration
             BlockPointlessReloads = config.Bind(GeneralSection, "Block Pointless Reloads", true,
                 new ConfigDescription("Refuse a reload that cannot add any rounds",
                     null, Order(4)));
-
-            ShowNotification = config.Bind(GeneralSection, "Notify When a Round Drops", false,
-                new ConfigDescription("Display a notification when a round is dropped instead of caught",
-                    null, Order(5)));
 
             VerboseLogging = config.Bind(DebugSection, "Verbose Logging", false,
                 new ConfigDescription("Write additional details to the log for troubleshooting",

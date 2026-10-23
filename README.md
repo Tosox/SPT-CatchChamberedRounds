@@ -28,7 +28,6 @@
 | `Quick Reload Skips the Catch` | `true` | Let a quick reload skip the catch and reload normally |
 | `Invert Reload Keys` | `false` | Swap the keys, so the normal reload drops the round and quick reload catches it |
 | `Block Pointless Reloads` | `true` | Refuse a reload that cannot add any rounds |
-| `Notify When a Round Drops` | `false` | Display a notification when a round is dropped instead of caught |
 | `Verbose Logging` | `false` | Write additional details to the log for troubleshooting |
 
 ## 🤝 Fika

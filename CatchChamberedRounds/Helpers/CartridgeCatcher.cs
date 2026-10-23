@@ -1,5 +1,4 @@
 using EFT;
-using EFT.Communications;
 using EFT.InventoryLogic;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Sync;
@@ -52,33 +51,11 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!Settings.Enabled.Value || CatchSync.Incompatible)
                 return false;
 
-            var name = patron.LocalizedName();
-
             // The player traded this round away for a faster reload
             if (ChamberDischarge.ConsumeBypass())
-            {
-                Notify($"Dropped {name}");
                 return false;
-            }
 
-            if (!InventoryPlacement.Commit(patron, controller))
-            {
-                Notify($"Dropped {name}, nowhere to stow it");
-                return false;
-            }
-
-            return true;
-        }
-
-        private static void Notify(string message)
-        {
-            if (!Settings.ShowNotification.Value)
-                return;
-
-            NotificationManager.DisplayMessageNotification(
-                message,
-                ENotificationDurationType.Default,
-                ENotificationIconType.Default);
+            return InventoryPlacement.Commit(patron, controller);
         }
     }
 }
