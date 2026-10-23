@@ -5,11 +5,8 @@ using UnityEngine;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
-    /// <summary>
-    /// Takes the reload animation over from the catch, by swallowing the reload's own opening and
-    /// blending into the state that feeds rounds instead. Armed before the reload starts and consumed
-    /// by the animation it replaces, so it works just as well for a reload this client did not start.
-    /// </summary>
+    // Swallows the reload's own opening and blends into the state that feeds rounds instead, so the
+    // catch runs straight into the reload
     internal static class ReloadSplice
     {
         private const float BlendDuration = 0.10f;
@@ -19,10 +16,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private static AnimatorProfile _profile;
         private static int _leavingState;
 
-        /// <summary>
-        /// Silencing the state being left belongs to the splice, because the splice is the only
-        /// reason its events are stale and the hold is the only thing that knows when they stop.
-        /// </summary>
+        // The splice is the only reason the leaving state's events are stale, so it silences them too
         internal static void Arm(FirearmsAnimator animator, AnimatorProfile profile,
             AnimationEventsEmitter emitter, int leavingState)
         {
@@ -39,9 +33,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             SuppressStaleEventsPatch.Clear();
         }
 
-        /// <summary>
-        /// Whether this animator's reload animation belongs to a splice and has been replaced by one.
-        /// </summary>
         internal static bool Consume(FirearmsAnimator animator)
         {
             if (_animator == null || !ReferenceEquals(animator, _animator))
@@ -72,9 +63,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _leavingState = 0;
         }
 
-        // The state being left fires every event it has left in one burst as soon as the animator
-        // enters the transition, and the weapon emitter queues those until the next late update, so
-        // the hold outlives the transition rather than a frame count that assumes a frame rate
+        // The leaving state dumps its remaining events in one burst as the transition starts, and the
+        // emitter queues them until the next late update, so this waits on the state, not on frames
         private static IEnumerator HoldBoltOpen(FirearmsAnimator animator, Animator unity, int leavingState)
         {
             for (var frame = 0; frame < MaxFlushFrames; frame++)

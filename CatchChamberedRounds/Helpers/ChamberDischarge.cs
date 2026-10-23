@@ -3,7 +3,6 @@ using EFT;
 using EFT.InventoryLogic;
 using System.Collections;
 using Tosox.CatchChamberedRounds.Configuration;
-using Tosox.CatchChamberedRounds.Patches;
 using Tosox.CatchChamberedRounds.Sync;
 
 namespace Tosox.CatchChamberedRounds.Helpers
@@ -178,7 +177,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             try
             {
-                // Started the way the splice starts it. Going back through the controller lets Fika
+                // Started the way the splice starts it, because controller.ReloadWithAmmo lets Fika
                 // refuse the reload outright while a weapon swap of its own is still waiting
                 var reload = controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>();
                 reload.Start(ammoPack, callback);

@@ -12,10 +12,7 @@ namespace Tosox.CatchChamberedRounds.Sync
 
         internal static Action<string, string> AnimationCue { get; set; }
 
-        /// <summary>
-        /// Sends word that a reload was cut short by putting the weapon away, which Fika itself only
-        /// reports when the trigger did it. Assigned by the Fika sync, and left null without Fika.
-        /// </summary>
+        // Fika only reports a reload cut short when the trigger did it, so this covers the rest
         internal static Action<string, bool> ReloadAbortAnnouncer { get; set; }
 
         internal static bool Incompatible { get; set; }

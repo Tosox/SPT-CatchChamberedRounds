@@ -25,10 +25,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
         {
             _profile = profile;
 
-            // The discharge writes aim, blindfire, the body animator and the left hand on its way
-            // in, and on a player this client only watches those belong to Fika, so they go back as
-            // they were. The left hand is the one that shows, because raising the load-one flag runs
-            // ResetLeftHand on the way through
+            // The discharge writes aim, blindfire and the left hand on its way in, and on an observed
+            // player those belong to Fika, so they go back as they were
             var hands = Controller.FirearmsAnimator?.Animator;
             var aiming = Controller.IsAiming;
             var blindFire = Player.MovementContext.BlindFire;
@@ -48,11 +46,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             EnterDischargeState();
         }
 
-        /// <summary>
-        /// Fika fast forwards the current operation the instant the owner's reload packet lands, which
-        /// is the instant the owner spliced. So this is where the reload has to be told to take over
-        /// from the catch rather than start again from its own opening.
-        /// </summary>
+        // Fika fast forwards this the instant the owner's reload packet lands, which is the instant
+        // the owner spliced
         public override void FastForward()
         {
             Splice();
@@ -83,9 +78,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!_profile.TryGetBoltCloseTime(current, out _))
                 return;
 
-            // The reload's opening is where it would take the round out of the chamber and throw it
-            // for the catcher to pick up, and that opening is what the splice skips. So the round is
-            // stowed right here instead, leaving the chamber as empty as it is for the owner
+            // The splice skips the reload's opening, which is where the round would have been thrown,
+            // so it is stowed right here instead
             if (!StowChamberedRound())
                 return;
 
@@ -94,12 +88,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             ReloadSplice.Arm(animator, _profile, Controller.AnimationEventsEmitter, leavingState);
         }
 
-        /// <summary>
-        /// The animator only offers idle to discharge once the idle loop has come round, and this
-        /// client is always a little behind the owner, so the state is entered rather than waited for.
-        /// Left to the transition it takes the load-a-round branch instead, because that is what the
-        /// flag the discharge raises is otherwise for.
-        /// </summary>
+        // The transition out of idle only comes round on the loop, and the load-one flag sends it to
+        // the load-a-round branch anyway, so the state is entered rather than waited for
         private void EnterDischargeState()
         {
             var unity = Controller?.FirearmsAnimator.UnityAnimator();

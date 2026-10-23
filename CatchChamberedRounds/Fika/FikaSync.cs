@@ -124,10 +124,7 @@ namespace Tosox.CatchChamberedRounds.Fika
                 ObservedCatch.Play(player, roundId);
         }
 
-        /// <summary>
-        /// Resolved out of Fika's own list of human players, which is what keeps a bot from ever being
-        /// handed anything and spares the rest of the mod a lookup of its own.
-        /// </summary>
+        // Fika's own list of humans, so a bot can never be handed anything
         private static FikaPlayer FindHuman(string profileId)
         {
             var handler = Singleton<IFikaNetworkManager>.Instance?.CoopHandler;

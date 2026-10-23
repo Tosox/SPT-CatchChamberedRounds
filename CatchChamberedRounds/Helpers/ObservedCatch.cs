@@ -46,11 +46,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             }
         }
 
-        /// <summary>
-        /// Cuts a replayed reload short the way putting the weapon away does for the player it belongs
-        /// to. Fika's own abort runs through SetTriggerPressed, which refuses until a round has gone
-        /// into the magazine, so it is lost whenever the swap comes before the first one.
-        /// </summary>
+        // Fika's own abort goes through SetTriggerPressed, which refuses until the first round is
+        // in, so a swap before that one never reaches the other clients
         internal static void AbortReload(Player player, bool fastHide)
         {
             if (!(player?.HandsController is Player.FirearmController controller))
