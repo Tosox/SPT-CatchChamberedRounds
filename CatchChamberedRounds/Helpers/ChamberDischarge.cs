@@ -2,7 +2,6 @@ using AnimationSystem;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
-using System;
 using System.Collections;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Patches;
@@ -12,7 +11,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
 {
     internal static class ChamberDischarge
     {
-        private static bool _chaining;
         private static bool _bypassArmed;
 
         internal static bool QuickReloadRequested { get; set; }
@@ -38,9 +36,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
                                       Callback startCallback)
         {
             if (!Settings.Enabled.Value)
-                return false;
-
-            if (_chaining)
                 return false;
 
             if (controller == null || ammoPack == null)
@@ -127,7 +122,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _bypassArmed = false;
 
             // Never let a skip armed by an abandoned splice swallow this reload's animation
-            SuppressReloadAnimationPatch.Clear();
+            ReloadSplice.Clear();
 
             if (Settings.VerboseLogging.Value)
                 Plugin.Log.LogInfo($"Catch starting: discharging {chambered.LocalizedName()} to {destination}");
@@ -135,12 +130,14 @@ namespace Tosox.CatchChamberedRounds.Helpers
             var discharge = controller.InitiateOperation<CatchAndReloadOperation>();
             discharge.StartCatch(chambered, destination, inventory, ammoPack, profile, callback, startCallback);
 
+            CatchSync.AnimationCue?.Invoke(player.ProfileId, chambered.Id);
+
             return true;
         }
 
         internal static void ChainReload(IResult result, Player.FirearmController controller, InventoryController inventory,
                                          Item chambered, AmmoPack ammoPack, Callback callback,
-                                         Action onHidden, bool fastHide)
+                                         Callback startCallback)
         {
             // The catch is done and a reload follows instead of the chambering that would normally
             // lower the flag and the reload drives its own trigger without ever touching this one
@@ -151,7 +148,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 _bypassArmed = false;
                 Plugin.Log.LogWarning($"Chamber discharge did not complete: {result?.Error?.ToString() ?? "no result"}");
                 callback?.Fail("Chamber discharge did not complete");
-                HandOverHide(controller, onHidden, fastHide);
                 return;
             }
 
@@ -163,41 +159,64 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!InventoryPlacement.Commit(chambered, inventory))
             {
                 callback?.Fail("No room left for the chambered round");
-                HandOverHide(controller, onHidden, fastHide);
                 return;
             }
 
             // Tell the other clients to catch this round as well
             CatchSync.CatchAnnouncer?.Invoke(controller._player.ProfileId, chambered.Id);
 
-            Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback, onHidden, fastHide));
+            // The catch lets go of its mark as it ends, and the reload only takes one of its own a
+            // frame later. Without this the frame in between is one where a weapon swap is accepted
+            MarkWeapon(controller);
+
+            Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback, startCallback));
         }
 
-        private static void HandOverHide(Player.FirearmController controller, Action onHidden, bool fastHide)
+        /// <summary>
+        /// Marks the weapon as being modified, which is what makes the game refuse a weapon swap while
+        /// a reload runs. Raised and lowered in pairs, because one left raised makes the weapon
+        /// impossible to draw for the rest of the raid.
+        /// </summary>
+        private static void MarkWeapon(Player.FirearmController controller)
         {
-            if (onHidden == null)
+            var weapon = controller?.Item;
+            if (weapon?.Parent == null)
                 return;
 
-            controller?.CurrentOperation?.HideWeapon(onHidden, fastHide);
+            weapon.Parent.RaiseRemoveEvent(weapon, CommandStatus.Begin, controller._player.InventoryController);
+        }
+
+        private static void UnmarkWeapon(Player.FirearmController controller)
+        {
+            var weapon = controller?.Item;
+            if (weapon?.Parent == null)
+                return;
+
+            controller._player.InventoryController.RaiseRemoveEvent(
+                new RemoveItemEventArgs(weapon, weapon.Parent, CommandStatus.Failed,
+                    controller._player.InventoryController));
         }
 
         private static IEnumerator ReloadNextFrame(Player.FirearmController controller, AmmoPack ammoPack, Callback callback,
-                                                   Action onHidden, bool fastHide)
+                                                   Callback startCallback)
         {
             // Let the discharge operation finish unwinding into idle before replacing it
             yield return null;
 
-            _chaining = true;
             try
             {
-                controller.ReloadWithAmmo(ammoPack, callback);
+                // Started the way the splice starts it. Going back through the controller lets Fika
+                // refuse the reload outright while a weapon swap of its own is still waiting
+                var reload = controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>();
+                reload.Start(ammoPack, callback);
+
+                startCallback?.Succeed();
             }
             finally
             {
-                _chaining = false;
+                // The reload holds a mark of its own from here on
+                UnmarkWeapon(controller);
             }
-
-            HandOverHide(controller, onHidden, fastHide);
         }
     }
 }

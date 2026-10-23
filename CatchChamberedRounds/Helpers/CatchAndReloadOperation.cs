@@ -3,7 +3,6 @@ using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using System;
-using System.Collections;
 using Tosox.CatchChamberedRounds.Configuration;
 using Tosox.CatchChamberedRounds.Patches;
 using Tosox.CatchChamberedRounds.Sync;
@@ -14,8 +13,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
     internal class CatchAndReloadOperation : Player.FirearmController.DischargeOperation
     {
         private const float BoltCloseMargin = 0.03f;
-        private const float BlendDuration = 0.10f;
-        private const int MaxFlushFrames = 12;
 
         private AmmoPack _ammoPack;
         private Callback _reloadCallback;
@@ -24,8 +21,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private Item _chambered;
         private bool _spliced;
         private bool _spliceAttempted;
-        private Action _hideAction;
-        private bool _fastHide;
+        private bool _weaponMarked;
 
         private AnimatorProfile _profile;
 
@@ -42,16 +38,9 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _chambered = null;
             _spliced = false;
             _spliceAttempted = false;
-            _hideAction = null;
-            _fastHide = false;
+            _weaponMarked = false;
             _profile = null;
             base.Reset();
-        }
-
-        public override void HideWeapon(Action onHidden, bool fastDrop, Item nextControllerItem = null)
-        {
-            _hideAction = onHidden;
-            _fastHide = fastDrop;
         }
 
         public override void OnEnd()
@@ -59,6 +48,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             // Nothing else puts the flag this operation raised back down once the weapon is someone
             // else's problem and left up it wedges an empty one into a load-a-round loop
             Controller?.FirearmsAnimator?.LoadOneTrigger(false);
+
+            UnmarkWeapon();
             base.OnEnd();
         }
 
@@ -75,6 +66,33 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _spliceAttempted = false;
 
             Start(chambered, 0, destination, new Callback(OnDischargeFinished));
+
+            MarkWeapon();
+        }
+
+        /// <summary>
+        /// A reload marks its weapon as being modified for as long as it runs, which is what makes the
+        /// game refuse a weapon swap part way through one. The catch in front of it needs the same
+        /// mark, or the swap is accepted, the hands change opens, and the host then refuses to equip
+        /// anything at all until an operation that never finishes does.
+        /// </summary>
+        private void MarkWeapon()
+        {
+            if (_weaponMarked || Weapon?.Parent == null)
+                return;
+
+            _weaponMarked = true;
+            Weapon.Parent.RaiseRemoveEvent(Weapon, CommandStatus.Begin, Player.InventoryController);
+        }
+
+        private void UnmarkWeapon()
+        {
+            if (!_weaponMarked)
+                return;
+
+            _weaponMarked = false;
+            Player.InventoryController.RaiseRemoveEvent(
+                new RemoveItemEventArgs(Weapon, Weapon.Parent, CommandStatus.Failed, Player.InventoryController));
         }
 
         public override void Update(float deltaTime)
@@ -97,10 +115,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (current.normalizedTime < boltCloses - BoltCloseMargin)
                 return;
 
-            Splice(animator, current.shortNameHash, current.normalizedTime);
+            Splice(current.shortNameHash, current.normalizedTime);
         }
 
-        private void Splice(Animator animator, int leavingState, float normalizedTime)
+        private void Splice(int leavingState, float normalizedTime)
         {
             // One go either way, so a refusal does not come back every frame
             _spliceAttempted = true;
@@ -126,9 +144,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 // crossfade starts and the whole point is to be ready for it
                 SuppressStaleEventsPatch.SuppressFrom(Controller.AnimationEventsEmitter, leavingState);
 
+                ReloadSplice.Arm(FirearmsAnimator, _profile, leavingState);
+
                 EndDischarge();
                 StartReload();
-                CrossFadeIntoReload(animator, leavingState);
 
                 if (Settings.VerboseLogging.Value)
                     Plugin.Log.LogInfo($"Spliced catch into reload at nt {normalizedTime:F3}");
@@ -136,15 +155,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
             catch (Exception ex)
             {
                 // Nothing downstream lowers either of these once the splice gave up on itself
-                SuppressReloadAnimationPatch.Clear();
+                ReloadSplice.Clear();
                 SuppressStaleEventsPatch.Clear();
 
                 Plugin.Log.LogError($"Failed to splice the catch into the reload: {ex}");
-
-                // No reload took the pending weapon swap off our hands and dropping it leaves them
-                // busy for good, so idle takes it instead
-                if (_hideAction != null)
-                    Controller.InitiateOperation<Player.FirearmController.Idling>().HideWeapon(_hideAction, _fastHide);
             }
         }
 
@@ -167,44 +181,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         private void StartReload()
         {
-            SuppressReloadAnimationPatch.SkipNext(FirearmsAnimator);
-
             var reload = Controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>();
             reload.Start(_ammoPack, _reloadCallback);
 
             // Vanilla raises this once the reload is under way and leaves it null, Fika hangs the
             // packet that replays the reload on the other clients off it
             _reloadStartCallback?.Succeed();
-
-            if (_hideAction != null)
-            {
-                reload.HideWeapon(_hideAction, _fastHide);
-                _hideAction = null;
-            }
-        }
-
-        private void CrossFadeIntoReload(Animator animator, int leavingState)
-        {
-            animator.CrossFade(_profile.FeedState, BlendDuration, FirearmsAnimator.HANDS_LAYER_INDEX, 0f);
-            Plugin.Instance.StartCoroutine(HoldBoltOpenThroughFlush(leavingState));
-        }
-
-        private IEnumerator HoldBoltOpenThroughFlush(int leavingState)
-        {
-            for (var frame = 0; frame < MaxFlushFrames; frame++)
-            {
-                if (Controller?.FirearmsAnimator != null)
-                    Controller.FirearmsAnimator.SetBoltCatch(true);
-
-                yield return null;
-
-                var animator = ResolveAnimator();
-                if (animator == null ||
-                    animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash != leavingState)
-                    break;
-            }
-
-            SuppressStaleEventsPatch.Clear();
         }
 
         private void OnDischargeFinished(IResult result)
@@ -213,7 +195,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return;
 
             ChamberDischarge.ChainReload(result, Controller, _inventory, _chambered, _ammoPack, _reloadCallback,
-                _hideAction, _fastHide);
+                _reloadStartCallback);
         }
 
         private Animator ResolveAnimator()

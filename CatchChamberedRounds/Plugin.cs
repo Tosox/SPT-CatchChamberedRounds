@@ -29,6 +29,7 @@ namespace Tosox.CatchChamberedRounds
             new OperationFactoryPatch().Enable();
             new SuppressReloadAnimationPatch().Enable();
             new SuppressStaleEventsPatch().Enable();
+            new ReloadAbortPatch().Enable();
 
             if (Chainloader.PluginInfos.ContainsKey(FikaGuid))
                 FikaSync.Init();

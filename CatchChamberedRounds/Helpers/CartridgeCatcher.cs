@@ -12,7 +12,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         internal static bool TryCatch(Item patron, IPlayer player, string source)
         {
-            if (!Settings.Enabled.Value || CatchSync.Incompatible || patron == null || player == null)
+            if (patron == null || player == null)
                 return false;
 
             if (player.IsAi())
@@ -32,8 +32,25 @@ namespace Tosox.CatchChamberedRounds.Helpers
             // Mirrored no matter what this client has configured, otherwise it would drop a round that
             // the player it belongs to kept
             if (!player.IsYourPlayer)
-                return CatchSync.TakeAnnouncement(player.ProfileId, patron.Id)
-                    && InventoryPlacement.Commit(patron, controller);
+            {
+                if (!CatchSync.TakeAnnouncement(player.ProfileId, patron.Id))
+                {
+                    if (Settings.VerboseLogging.Value)
+                        Plugin.Log.LogInfo($"No catch announced for {player.Profile?.Nickname}, dropping the round");
+
+                    return false;
+                }
+
+                var mirrored = InventoryPlacement.Commit(patron, controller);
+
+                if (Settings.VerboseLogging.Value)
+                    Plugin.Log.LogInfo($"Mirrored the catch of {player.Profile?.Nickname}, stowed={mirrored}");
+
+                return mirrored;
+            }
+
+            if (!Settings.Enabled.Value || CatchSync.Incompatible)
+                return false;
 
             var name = patron.LocalizedName();
 

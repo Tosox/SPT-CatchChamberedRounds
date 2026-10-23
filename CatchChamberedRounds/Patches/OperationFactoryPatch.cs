@@ -27,6 +27,9 @@ namespace Tosox.CatchChamberedRounds.Patches
 
             __result[typeof(CatchAndReloadOperation)] =
                 () => new CatchAndReloadOperation(__instance);
+
+            __result[typeof(ObservedCatchOperation)] =
+                () => new ObservedCatchOperation(__instance);
         }
     }
 }
