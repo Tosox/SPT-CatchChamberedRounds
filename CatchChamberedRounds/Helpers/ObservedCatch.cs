@@ -1,4 +1,3 @@
-using AnimationSystem;
 using EFT;
 using EFT.InventoryLogic;
 using System;
@@ -33,8 +32,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                     return;
 
                 // Read the same way the owner read it, so this client splices exactly where they do
-                var profile = AnimatorProfile.Read(
-                    (controller.FirearmsAnimator?.Animator as UnityAnimatorWrapper)?.Animator);
+                var profile = AnimatorProfile.Read(controller.FirearmsAnimator.UnityAnimator());
 
                 controller.InitiateOperation<ObservedCatchOperation>()
                     .StartCatch(chambered, destination, profile);
@@ -69,6 +67,5 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (Settings.VerboseLogging.Value)
                 Plugin.Log.LogInfo($"Cut the reload of {player.Profile?.Nickname} short on this client");
         }
-
     }
 }

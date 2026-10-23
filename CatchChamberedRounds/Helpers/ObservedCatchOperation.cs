@@ -1,7 +1,6 @@
 using AnimationSystem;
 using EFT;
 using EFT.InventoryLogic;
-using Tosox.CatchChamberedRounds.Patches;
 using Tosox.CatchChamberedRounds.Sync;
 
 namespace Tosox.CatchChamberedRounds.Helpers
@@ -74,7 +73,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return;
 
             var animator = Controller?.FirearmsAnimator;
-            var unity = (animator?.Animator as UnityAnimatorWrapper)?.Animator;
+            var unity = animator.UnityAnimator();
             if (unity == null)
                 return;
 
@@ -92,8 +91,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             var leavingState = current.shortNameHash;
 
-            SuppressStaleEventsPatch.SuppressFrom(Controller.AnimationEventsEmitter, leavingState);
-            ReloadSplice.Arm(animator, _profile, leavingState);
+            ReloadSplice.Arm(animator, _profile, Controller.AnimationEventsEmitter, leavingState);
         }
 
         /// <summary>
@@ -104,7 +102,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         /// </summary>
         private void EnterDischargeState()
         {
-            var unity = (Controller?.FirearmsAnimator?.Animator as UnityAnimatorWrapper)?.Animator;
+            var unity = Controller?.FirearmsAnimator.UnityAnimator();
             if (unity == null)
                 return;
 

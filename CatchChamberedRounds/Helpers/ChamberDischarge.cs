@@ -1,4 +1,3 @@
-using AnimationSystem;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
@@ -90,8 +89,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return Decline("no inventory to place the round into");
 
             // Read the weapon's animator profile to prepare for the splice
-            var profile = AnimatorProfile.Read(
-                (controller.FirearmsAnimator?.Animator as UnityAnimatorWrapper)?.Animator);
+            var profile = AnimatorProfile.Read(controller.FirearmsAnimator.UnityAnimator());
 
             // A weapon the splice cannot read is not an error, it just plays both animations in sequence
             if (Settings.VerboseLogging.Value && profile?.FeedStateProblem != null)
@@ -167,34 +165,9 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             // The catch lets go of its mark as it ends, and the reload only takes one of its own a
             // frame later. Without this the frame in between is one where a weapon swap is accepted
-            MarkWeapon(controller);
+            WeaponMark.Raise(controller);
 
             Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback, startCallback));
-        }
-
-        /// <summary>
-        /// Marks the weapon as being modified, which is what makes the game refuse a weapon swap while
-        /// a reload runs. Raised and lowered in pairs, because one left raised makes the weapon
-        /// impossible to draw for the rest of the raid.
-        /// </summary>
-        private static void MarkWeapon(Player.FirearmController controller)
-        {
-            var weapon = controller?.Item;
-            if (weapon?.Parent == null)
-                return;
-
-            weapon.Parent.RaiseRemoveEvent(weapon, CommandStatus.Begin, controller._player.InventoryController);
-        }
-
-        private static void UnmarkWeapon(Player.FirearmController controller)
-        {
-            var weapon = controller?.Item;
-            if (weapon?.Parent == null)
-                return;
-
-            controller._player.InventoryController.RaiseRemoveEvent(
-                new RemoveItemEventArgs(weapon, weapon.Parent, CommandStatus.Failed,
-                    controller._player.InventoryController));
         }
 
         private static IEnumerator ReloadNextFrame(Player.FirearmController controller, AmmoPack ammoPack, Callback callback,
@@ -215,7 +188,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             finally
             {
                 // The reload holds a mark of its own from here on
-                UnmarkWeapon(controller);
+                WeaponMark.Lower(controller);
             }
         }
     }

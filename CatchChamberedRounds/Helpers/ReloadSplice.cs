@@ -1,4 +1,4 @@
-using AnimationSystem;
+using AnimationEventSystem;
 using System.Collections;
 using Tosox.CatchChamberedRounds.Patches;
 using UnityEngine;
@@ -19,18 +19,24 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private static AnimatorProfile _profile;
         private static int _leavingState;
 
-        internal static void Arm(FirearmsAnimator animator, AnimatorProfile profile, int leavingState)
+        /// <summary>
+        /// Silencing the state being left belongs to the splice, because the splice is the only
+        /// reason its events are stale and the hold is the only thing that knows when they stop.
+        /// </summary>
+        internal static void Arm(FirearmsAnimator animator, AnimatorProfile profile,
+            AnimationEventsEmitter emitter, int leavingState)
         {
             _animator = animator;
             _profile = profile;
             _leavingState = leavingState;
+
+            SuppressStaleEventsPatch.SuppressFrom(emitter, leavingState);
         }
 
         internal static void Clear()
         {
-            _animator = null;
-            _profile = null;
-            _leavingState = 0;
+            Disarm();
+            SuppressStaleEventsPatch.Clear();
         }
 
         /// <summary>
@@ -43,15 +49,27 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             var profile = _profile;
             var leavingState = _leavingState;
-            Clear();
 
-            var unity = (animator.Animator as UnityAnimatorWrapper)?.Animator;
+            // Taken rather than cleared, because the suppression has to outlive this call
+            Disarm();
+
+            var unity = animator.UnityAnimator();
             if (unity == null || profile == null || profile.FeedState == 0)
+            {
+                SuppressStaleEventsPatch.Clear();
                 return false;
+            }
 
             unity.CrossFade(profile.FeedState, BlendDuration, FirearmsAnimator.HANDS_LAYER_INDEX, 0f);
             Plugin.Instance.StartCoroutine(HoldBoltOpen(animator, unity, leavingState));
             return true;
+        }
+
+        private static void Disarm()
+        {
+            _animator = null;
+            _profile = null;
+            _leavingState = 0;
         }
 
         // The state being left fires every event it has left in one burst as soon as the animator

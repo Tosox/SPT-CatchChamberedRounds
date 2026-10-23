@@ -1,12 +1,9 @@
-using AnimationSystem;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using System;
 using Tosox.CatchChamberedRounds.Configuration;
-using Tosox.CatchChamberedRounds.Patches;
 using Tosox.CatchChamberedRounds.Sync;
-using UnityEngine;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
@@ -70,19 +67,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
             MarkWeapon();
         }
 
-        /// <summary>
-        /// A reload marks its weapon as being modified for as long as it runs, which is what makes the
-        /// game refuse a weapon swap part way through one. The catch in front of it needs the same
-        /// mark, or the swap is accepted, the hands change opens, and the host then refuses to equip
-        /// anything at all until an operation that never finishes does.
-        /// </summary>
         private void MarkWeapon()
         {
-            if (_weaponMarked || Weapon?.Parent == null)
+            if (_weaponMarked)
                 return;
 
-            _weaponMarked = true;
-            Weapon.Parent.RaiseRemoveEvent(Weapon, CommandStatus.Begin, Player.InventoryController);
+            _weaponMarked = WeaponMark.Raise(Controller);
         }
 
         private void UnmarkWeapon()
@@ -91,8 +81,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return;
 
             _weaponMarked = false;
-            Player.InventoryController.RaiseRemoveEvent(
-                new RemoveItemEventArgs(Weapon, Weapon.Parent, CommandStatus.Failed, Player.InventoryController));
+            WeaponMark.Lower(Controller);
         }
 
         public override void Update(float deltaTime)
@@ -102,7 +91,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (_spliceAttempted || _profile == null || _profile.FeedState == 0 || State != Player.EOperationState.Executing)
                 return;
 
-            var animator = ResolveAnimator();
+            var animator = Controller?.FirearmsAnimator.UnityAnimator();
             if (animator == null)
                 return;
 
@@ -142,9 +131,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
                 // Armed before anything else moves, because the flush lands as soon as the
                 // crossfade starts and the whole point is to be ready for it
-                SuppressStaleEventsPatch.SuppressFrom(Controller.AnimationEventsEmitter, leavingState);
-
-                ReloadSplice.Arm(FirearmsAnimator, _profile, leavingState);
+                ReloadSplice.Arm(FirearmsAnimator, _profile, Controller.AnimationEventsEmitter, leavingState);
 
                 EndDischarge();
                 StartReload();
@@ -154,9 +141,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             }
             catch (Exception ex)
             {
-                // Nothing downstream lowers either of these once the splice gave up on itself
+                // Nothing downstream lowers the splice once it gave up on itself
                 ReloadSplice.Clear();
-                SuppressStaleEventsPatch.Clear();
 
                 Plugin.Log.LogError($"Failed to splice the catch into the reload: {ex}");
             }
@@ -196,11 +182,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             ChamberDischarge.ChainReload(result, Controller, _inventory, _chambered, _ammoPack, _reloadCallback,
                 _reloadStartCallback);
-        }
-
-        private Animator ResolveAnimator()
-        {
-            return (Controller?.FirearmsAnimator?.Animator as UnityAnimatorWrapper)?.Animator;
         }
     }
 }
