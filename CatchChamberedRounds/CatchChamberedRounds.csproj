@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Tosox.CatchChamberedRounds</RootNamespace>
+    <AssemblyName>Tosox.CatchChamberedRounds</AssemblyName>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Configurations>Debug;Release</Configurations>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.43" IncludeAssets="compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="AnimationSystem.Types" HintPath="..\References\AnimationSystem.Types.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="..\References\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Comfort" HintPath="..\References\Comfort.dll" Private="false" />
+    <Reference Include="Fika.Core" HintPath="..\References\Fika.Core.dll" Private="false" />
+    <Reference Include="Sirenix.Serialization" HintPath="..\References\Sirenix.Serialization.dll" Private="false" />
+    <Reference Include="spt-reflection" HintPath="..\References\spt-reflection.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CatchChamberedRounds.Net\CatchChamberedRounds.Net.csproj" />
+  </ItemGroup>
+</Project>
