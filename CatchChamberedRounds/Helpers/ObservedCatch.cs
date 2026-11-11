@@ -25,17 +25,11 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 if (!(weapon.Chambers[0].ContainedItem is Ammo chambered) || chambered.Id != roundId)
                     return;
 
-                // A non-null address is all the discharge reads to pick the catch animation over the
-                // eject and it never moves the round itself
-                var destination = player.InventoryController?.CreateItemAddress();
-                if (destination == null)
-                    return;
-
                 // Read the same way the owner read it, so this client splices exactly where they do
                 var profile = AnimatorProfile.Read(controller.FirearmsAnimator.UnityAnimator());
 
                 controller.InitiateOperation<ObservedCatchOperation>()
-                    .StartCatch(chambered, destination, profile);
+                    .StartCatch(chambered, profile);
 
                 if (Settings.VerboseLogging.Value)
                     Plugin.Log.LogInfo($"Playing the catch of {player.Profile?.Nickname} on this client");

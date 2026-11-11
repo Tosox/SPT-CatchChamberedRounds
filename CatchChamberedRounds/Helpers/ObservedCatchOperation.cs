@@ -7,8 +7,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
 {
     internal class ObservedCatchOperation : Player.FirearmController.DischargeOperation
     {
-        private const string DischargeState = "DISCHARGE";
-
         private AnimatorProfile _profile;
 
         public ObservedCatchOperation(Player.FirearmController controller) : base(controller)
@@ -21,7 +19,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             base.Reset();
         }
 
-        internal void StartCatch(Ammo chambered, ItemAddress destination, AnimatorProfile profile)
+        internal void StartCatch(Ammo chambered, AnimatorProfile profile)
         {
             _profile = profile;
 
@@ -34,7 +32,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             var useLeftHand = hands != null
                 && hands.GetBool(AnimationControllerParametersTable.BOOL_USELEFTHAND);
 
-            Start(chambered, 0, destination, _ => { });
+            Start(chambered, 0, null, _ => { });
 
             Controller.IsAiming = aiming;
             Player.MovementContext.SetBlindFire(blindFire);
@@ -42,8 +40,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             if (hands != null)
                 AnimationControllerParametersTable.SetUseLeftHand(hands, useLeftHand);
-
-            EnterDischargeState();
         }
 
         // Fika fast forwards this the instant the owner's reload packet lands, which is the instant
@@ -52,14 +48,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
         {
             Splice();
             base.FastForward();
-        }
-
-        public override void OnEnd()
-        {
-            // The discharge raises this to get the catch variant, and on a client that only watches
-            // there is no chambering afterwards to put it back down
-            Controller?.FirearmsAnimator?.LoadOneTrigger(false);
-            base.OnEnd();
         }
 
         private void Splice()
@@ -86,23 +74,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             var leavingState = current.shortNameHash;
 
             ReloadSplice.Arm(animator, _profile, Controller.AnimationEventsEmitter, leavingState);
-        }
-
-        // The transition out of idle only comes round on the loop, and the load-one flag sends it to
-        // the load-a-round branch anyway, so the state is entered rather than waited for
-        private void EnterDischargeState()
-        {
-            var unity = Controller?.FirearmsAnimator.UnityAnimator();
-            if (unity == null)
-                return;
-
-            var state = UnityEngine.Animator.StringToHash(DischargeState);
-            if (!unity.HasState(FirearmsAnimator.HANDS_LAYER_INDEX, state))
-                return;
-
-            // Cut rather than blend, so the hands layer arrives at the same instant the left hand
-            // reacts to the parameters instead of a tenth of a second behind it
-            unity.Play(state, FirearmsAnimator.HANDS_LAYER_INDEX, 0f);
         }
 
         private bool StowChamberedRound()

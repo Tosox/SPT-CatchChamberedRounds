@@ -110,7 +110,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (preview.Failed || preview.Value == null)
                 return Decline($"nowhere to put the round ({preview.Error?.ToString() ?? "no result"})");
 
-            // Without an address the discharge plays its eject variant and throws the round
             var destination = InventoryPlacement.AddressOf(preview.Value);
             if (destination == null)
                 return Decline($"could not read an address out of a {preview.Value.GetType().FullName}");
@@ -124,8 +123,10 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (Settings.VerboseLogging.Value)
                 Plugin.Log.LogInfo($"Catch starting: discharging {chambered.LocalizedName()} to {destination}");
 
+            // The discharge is not told where the round is going. An address would raise the load
+            // one flag, which starts the left hand on a feed the catch is about to replace
             var discharge = controller.InitiateOperation<CatchAndReloadOperation>();
-            discharge.StartCatch(chambered, destination, inventory, ammoPack, profile, callback, startCallback);
+            discharge.StartCatch(chambered, inventory, ammoPack, profile, callback, startCallback);
 
             CatchSync.AnimationCue?.Invoke(player.ProfileId, chambered.Id);
 
@@ -136,10 +137,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
                                          Item chambered, AmmoPack ammoPack, Callback callback,
                                          Callback startCallback)
         {
-            // The catch is done and a reload follows instead of the chambering that would normally
-            // lower the flag and the reload drives its own trigger without ever touching this one
-            controller?.FirearmsAnimator?.LoadOneTrigger(false);
-
             if (result == null || result.Failed)
             {
                 _bypassArmed = false;

@@ -42,16 +42,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         public override void OnEnd()
         {
-            // Nothing else puts the flag this operation raised back down once the weapon is someone
-            // else's problem and left up it wedges an empty one into a load-a-round loop
-            Controller?.FirearmsAnimator?.LoadOneTrigger(false);
-
             UnmarkWeapon();
             base.OnEnd();
         }
 
-        internal void StartCatch(Ammo chambered, ItemAddress destination, InventoryController inventory,
-            AmmoPack ammoPack, AnimatorProfile profile, Callback callback, Callback startCallback)
+        internal void StartCatch(Ammo chambered, InventoryController inventory, AmmoPack ammoPack,
+            AnimatorProfile profile, Callback callback, Callback startCallback)
         {
             _profile = profile;
             _ammoPack = ammoPack;
@@ -62,7 +58,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _spliced = false;
             _spliceAttempted = false;
 
-            Start(chambered, 0, destination, new Callback(OnDischargeFinished));
+            Start(chambered, 0, null, new Callback(OnDischargeFinished));
 
             MarkWeapon();
         }
@@ -154,11 +150,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             State = Player.EOperationState.Finished;
 
             FirearmsAnimator.Discharge(false);
-
-            // Raised by the discharge to get the catch variant, and nothing downstream lowers it.
-            // Left up it wedges the weapon into a looping load-a-round animation.
-            FirearmsAnimator.LoadOneTrigger(false);
-
             FirearmsAnimator.SetAmmoInChamber(Weapon.ChamberAmmoCount);
             FirearmsAnimator.SetShellsInWeapon(Weapon.ShellsInWeaponCount);
 
