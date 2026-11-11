@@ -9,11 +9,11 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private const string BoltCloseEvent = "OffBoltCatch";
         private const string FeedRoundEvent = "AddAmmoInMag";
 
-        // Events and their normalized times, keyed by both the full path hash and the short name hash
+        // Event times per state, under both the full path hash and the short name hash
         private readonly Dictionary<int, Dictionary<string, float>> _states =
             new Dictionary<int, Dictionary<string, float>>();
 
-        // The state that feeds rounds into the magazine or zero when there is no single one
+        // Zero unless exactly one state feeds the magazine
         internal int FeedState { get; private set; }
 
         internal string FeedStateProblem { get; private set; }
@@ -32,8 +32,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             foreach (var behaviour in behaviours)
             {
-                // A state with no events carries EventsListId -1 and asking for its list makes EFT
-                // log an error of its own, so those are skipped rather than queried
+                // EventsListId -1 means no events, and asking for that list makes EFT log an error
                 if (behaviour == null || behaviour.EventsData == null || behaviour.EventsListId < 0)
                     continue;
 
@@ -47,7 +46,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                     if (animationEvent == null || !animationEvent.Enabled)
                         continue;
 
-                    // Keep the earliest, since a state can raise the same event more than once
+                    // Keep the earliest time if a state raises an event more than once
                     if (!times.TryGetValue(animationEvent.FunctionName, out var seen) || animationEvent.Time < seen)
                         times[animationEvent.FunctionName] = animationEvent.Time;
                 }
@@ -67,8 +66,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
             if (feedCandidates != 1)
             {
-                // More than one feeding state means the rule no longer identifies a single answer
-                // and guessing between them is worse than playing both animations
+                // With several candidates, playing both animations beats guessing
                 profile.FeedStateProblem = feedCandidates == 0
                     ? "no state feeds rounds into the magazine"
                     : $"{feedCandidates} states feed rounds into the magazine";

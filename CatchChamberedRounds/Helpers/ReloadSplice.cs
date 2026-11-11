@@ -5,8 +5,7 @@ using UnityEngine;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
-    // Swallows the reload's own opening and blends into the state that feeds rounds instead, so the
-    // catch runs straight into the reload
+    // Skips the reload's opening and blends straight into feeding rounds, so the catch flows into the reload
     internal static class ReloadSplice
     {
         private const float BlendDuration = 0.10f;
@@ -16,7 +15,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private static AnimatorProfile _profile;
         private static int _leavingState;
 
-        // The splice is the only reason the leaving state's events are stale, so it silences them too
+        // The splice is what makes the leaving state's events stale, so it mutes them too
         internal static void Arm(FirearmsAnimator animator, AnimatorProfile profile,
             AnimationEventsEmitter emitter, int leavingState)
         {
@@ -41,7 +40,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             var profile = _profile;
             var leavingState = _leavingState;
 
-            // Taken rather than cleared, because the suppression has to outlive this call
+            // Disarm, not Clear, the event suppression has to outlive this call
             Disarm();
 
             var unity = animator.UnityAnimator();
@@ -63,8 +62,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _leavingState = 0;
         }
 
-        // The leaving state dumps its remaining events in one burst as the transition starts, and the
-        // emitter queues them until the next late update, so this waits on the state, not on frames
+        // The leaving state fires its remaining events in a burst when the transition starts, queued
+        // until late update, so this waits on the state rather than a frame count
         private static IEnumerator HoldBoltOpen(FirearmsAnimator animator, Animator unity, int leavingState)
         {
             for (var frame = 0; frame < MaxFlushFrames; frame++)

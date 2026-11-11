@@ -26,7 +26,6 @@ namespace Tosox.CatchChamberedRounds.Patches
         {
             try
             {
-                // Skip the vanilla reload only while the discharge animation is taking over
                 return !ChamberDischarge.TryStart(__instance.Controller, ammoPack, finishCallback, startCallback);
             }
             catch (Exception ex)

@@ -5,14 +5,14 @@ namespace Tosox.CatchChamberedRounds.Sync
 {
     internal static class CatchSync
     {
-        // The round each player announced a catch for, keyed by profile id
+        // Profile id to the id of the round that player caught
         private static readonly Dictionary<string, string> Announcements = new Dictionary<string, string>();
 
         internal static Action<string, string> CatchAnnouncer { get; set; }
 
         internal static Action<string, string> AnimationCue { get; set; }
 
-        // Fika only reports a reload cut short when the trigger did it, so this covers the rest
+        // Fika only syncs aborts caused by the trigger
         internal static Action<string, bool> ReloadAbortAnnouncer { get; set; }
 
         internal static bool Incompatible { get; set; }

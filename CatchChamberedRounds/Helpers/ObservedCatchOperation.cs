@@ -23,8 +23,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
         {
             _profile = profile;
 
-            // The discharge writes aim, blindfire and the left hand on its way in, and on an observed
-            // player those belong to Fika, so they go back as they were
+            // Start overwrites aim, blindfire and the left hand, which Fika owns on an observed player
             var hands = Controller.FirearmsAnimator?.Animator;
             var aiming = Controller.IsAiming;
             var blindFire = Player.MovementContext.BlindFire;
@@ -42,8 +41,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 AnimationControllerParametersTable.SetUseLeftHand(hands, useLeftHand);
         }
 
-        // Fika fast forwards this the instant the owner's reload packet lands, which is the instant
-        // the owner spliced
+        // Fika fast-forwards this when the owner's reload packet arrives, which is when the owner spliced
         public override void FastForward()
         {
             Splice();
@@ -60,14 +58,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (unity == null)
                 return;
 
-            // The same test the owner makes before splicing. A weapon whose catch state says nothing
-            // about its bolt closing is one the owner plays in full, so it is not spliced here either
+            // Same check as the owner, without a bolt-close event the owner didn't splice either
             var current = unity.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX);
             if (!_profile.TryGetBoltCloseTime(current, out _))
                 return;
 
-            // The splice skips the reload's opening, which is where the round would have been thrown,
-            // so it is stowed right here instead
+            // The splice skips the reload's opening, where the round would be thrown, so stow it here
             if (!StowChamberedRound())
                 return;
 
@@ -81,8 +77,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!Weapon.HasChambers || !(Weapon.Chambers[0].ContainedItem is Ammo chambered))
                 return false;
 
-            // Only if the owner got the round into their own gear, otherwise it belongs on the floor
-            // and the untouched reload is what puts it there
+            // Only if the owner stowed it, otherwise the reload drops it as usual
             if (!CatchSync.TakeAnnouncement(Player.ProfileId, chambered.Id))
                 return false;
 

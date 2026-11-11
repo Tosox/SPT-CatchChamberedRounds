@@ -22,8 +22,7 @@ namespace Tosox.CatchChamberedRounds.Patches
         [PatchPostfix]
         public static void Postfix(Player.FirearmController.ReloadInternalMagWithOpenBoltOperation __instance, bool fastDrop)
         {
-            // Fika only announces an abort the trigger caused. Left unsaid, the other clients load
-            // the whole magazine while this one loads a single round
+            // Fika only syncs trigger aborts. Without this, other clients would load the full magazine
             if (__instance.Player != null && __instance.Player.IsYourPlayer)
                 CatchSync.ReloadAbortAnnouncer?.Invoke(__instance.Player.ProfileId, fastDrop);
         }

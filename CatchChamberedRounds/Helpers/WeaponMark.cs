@@ -3,8 +3,8 @@ using EFT.InventoryLogic;
 
 namespace Tosox.CatchChamberedRounds.Helpers
 {
-    // A reload marks its weapon as being modified, which is what makes the game refuse a weapon swap
-    // part way through one. Raised and lowered in pairs, or the weapon can never be drawn again
+    // Marks the weapon as being modified so the game refuses a swap mid-catch, as it does mid-reload.
+    // Always pair Raise with Lower, or the weapon can never be drawn again
     internal static class WeaponMark
     {
         internal static bool Raise(Player.FirearmController controller)

@@ -20,7 +20,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (source != InternalMagBoltOpenSource)
                 return false;
 
-            // Spent casings are litter, not ammo
             if (patron is Ammo ammo && ammo.IsUsed)
                 return false;
 
@@ -28,8 +27,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (controller?.Inventory?.Equipment == null)
                 return false;
 
-            // Mirrored no matter what this client has configured, otherwise it would drop a round that
-            // the player it belongs to kept
+            // Mirror the owner regardless of local settings or this client drops a round they kept
             if (!player.IsYourPlayer)
             {
                 if (!CatchSync.TakeAnnouncement(player.ProfileId, patron.Id))
@@ -51,7 +49,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!Settings.Enabled.Value || CatchSync.Incompatible)
                 return false;
 
-            // The player traded this round away for a faster reload
+            // A quick reload drops the round
             if (ChamberDischarge.ConsumeBypass())
                 return false;
 

@@ -58,7 +58,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _spliced = false;
             _spliceAttempted = false;
 
-            // No address, it would only raise the load-one flag and start the left hand on a feed
+            // No destination, it would raise LoadOne and make the left hand start feeding a round
             Start(chambered, 0, null, new Callback(OnDischargeFinished));
 
             MarkWeapon();
@@ -97,7 +97,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!_profile.TryGetBoltCloseTime(current, out var boltCloses))
                 return;
 
-            // Cut a hair before the bolt starts closing, so the close never plays
+            // Splice just before the bolt closes, so the close never plays
             if (current.normalizedTime < boltCloses - BoltCloseMargin)
                 return;
 
@@ -106,28 +106,24 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         private void Splice(int leavingState, float normalizedTime)
         {
-            // One go either way, so a refusal does not come back every frame
+            // Only try once, so a failure isn't retried every frame
             _spliceAttempted = true;
 
             try
             {
-                // The round is still sitting in the chamber slot at this point, so it has a parent
-                // to be moved out of and can merge into a stack you already carry
+                // The round is still in the chamber slot, so it can be moved and merged into a stack
                 if (!InventoryPlacement.Commit(_chambered, _inventory))
                 {
-                    // Nowhere to put it after all. Let the discharge play out and drop the round,
-                    // which is what the sequential path would have done too.
+                    // No room after all, so finish the discharge and drop the round like the unspliced path
                     Plugin.Log.LogWarning("No room for the chambered round at the splice, letting the catch finish");
                     return;
                 }
 
                 _spliced = true;
 
-                // Tell the other clients to catch this round as well
                 CatchSync.CatchAnnouncer?.Invoke(Controller._player.ProfileId, _chambered.Id);
 
-                // Armed before anything else moves, because the flush lands as soon as the
-                // crossfade starts and the whole point is to be ready for it
+                // Arm first, the stale events flush as soon as the crossfade starts
                 ReloadSplice.Arm(FirearmsAnimator, _profile, Controller.AnimationEventsEmitter, leavingState);
 
                 EndDischarge();
@@ -138,7 +134,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             }
             catch (Exception ex)
             {
-                // Nothing downstream lowers the splice once it gave up on itself
+                // Nothing else clears a splice that failed halfway
                 ReloadSplice.Clear();
 
                 Plugin.Log.LogError($"Failed to splice the catch into the reload: {ex}");
@@ -162,8 +158,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             var reload = Controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>();
             reload.Start(_ammoPack, _reloadCallback);
 
-            // Vanilla raises this once the reload is under way and leaves it null, Fika hangs the
-            // packet that replays the reload on the other clients off it
+            // Fika sends the reload to the other clients from this callback
             _reloadStartCallback?.Succeed();
         }
 

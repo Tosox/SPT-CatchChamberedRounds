@@ -18,8 +18,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
 
         internal static bool Commit(Item patron, InventoryController controller)
         {
-            // Placement helpers all read Item.Parent, which throws instead of returning null.
-            // An owner of its own is what lets this one merge into a stack rather than take a cell.
             var original = patron.CurrentAddress;
             if (original == null)
             {

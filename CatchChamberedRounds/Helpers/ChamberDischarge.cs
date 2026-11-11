@@ -53,7 +53,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (CatchSync.Incompatible)
                 return Decline("another client in the raid handles the chambered round differently");
 
-            // Leave vanilla to reject reloads it would not have started anyway
+            // Let vanilla handle reloads it would refuse anyway
             var magazine = weapon.GetCurrentMagazine();
             if (magazine == null || controller.Blindfire || !controller.CanStartReload())
                 return Decline($"vanilla would not start this reload (magazine={magazine != null}, blindfire={controller.Blindfire})");
@@ -83,14 +83,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (inventory?.Inventory?.Equipment == null)
                 return Decline("no inventory to place the round into");
 
-            // Read the weapon's animator profile to prepare for the splice
             var profile = AnimatorProfile.Read(controller.FirearmsAnimator.UnityAnimator());
 
-            // A weapon the splice cannot read is not an error, it just plays both animations in sequence
+            // Not an error, that weapon just plays both animations in sequence
             if (Settings.VerboseLogging.Value && profile?.FeedStateProblem != null)
                 Plugin.Log.LogInfo($"Will not splice {weapon.LocalizedName()}: {profile.FeedStateProblem}");
 
-            // With the animation off, stow the round right here
             if (!Settings.PlayCatchAnimation.Value)
             {
                 _bypassArmed = false;
@@ -101,15 +99,15 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 return Decline("catch animation turned off, round stowed silently");
             }
 
-            // Check there is somewhere to put the round before committing to the animation
+            // Make sure the round fits before starting the animation
             var preview = InventoryPlacement.Find(chambered, inventory, true);
             if (preview.Failed || preview.Value == null)
                 return Decline($"nowhere to put the round ({preview.Error?.ToString() ?? "no result"})");
 
-            // Never let a stale bypass from an earlier reload leak into this one
+            // Clear a bypass left over from an earlier reload
             _bypassArmed = false;
 
-            // Never let a skip armed by an abandoned splice swallow this reload's animation
+            // Clear a splice left armed by an abandoned catch
             ReloadSplice.Clear();
 
             if (Settings.VerboseLogging.Value)
@@ -138,19 +136,16 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (Settings.VerboseLogging.Value)
                 Plugin.Log.LogInfo("Catch animation finished, chaining the reload");
 
-            // This runs from inside the operation, before it re-reads ChamberAmmoCount to
-            // update the animator, which is exactly where vanilla completes the inventory move
+            // Runs inside the operation before it re-reads ChamberAmmoCount, where vanilla moves it too
             if (!InventoryPlacement.Commit(chambered, inventory))
             {
                 callback?.Fail("No room left for the chambered round");
                 return;
             }
 
-            // Tell the other clients to catch this round as well
             CatchSync.CatchAnnouncer?.Invoke(controller._player.ProfileId, chambered.Id);
 
-            // The catch lets go of its mark as it ends, and the reload only takes one of its own a
-            // frame later. Without this the frame in between is one where a weapon swap is accepted
+            // Covers the frame between the catch dropping its mark and the reload taking one
             WeaponMark.Raise(controller);
 
             Plugin.Instance.StartCoroutine(ReloadNextFrame(controller, ammoPack, callback, startCallback));
@@ -159,13 +154,12 @@ namespace Tosox.CatchChamberedRounds.Helpers
         private static IEnumerator ReloadNextFrame(Player.FirearmController controller, AmmoPack ammoPack, Callback callback,
                                                    Callback startCallback)
         {
-            // Let the discharge operation finish unwinding into idle before replacing it
+            // Let the discharge finish into idle first
             yield return null;
 
             try
             {
-                // Started the way the splice starts it, because controller.ReloadWithAmmo lets Fika
-                // refuse the reload outright while a weapon swap of its own is still waiting
+                // Not controller.ReloadWithAmmo, Fika refuses that while its own weapon swap is pending
                 var reload = controller.InitiateOperation<Player.FirearmController.ReloadInternalMagBase>();
                 reload.Start(ammoPack, callback);
 
@@ -173,7 +167,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             }
             finally
             {
-                // The reload holds a mark of its own from here on
+                // The reload holds its own mark from here
                 WeaponMark.Lower(controller);
             }
         }

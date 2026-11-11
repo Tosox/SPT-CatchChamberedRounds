@@ -20,8 +20,7 @@ namespace Tosox.CatchChamberedRounds.Fika
 
         internal static void Init()
         {
-            // The packet lives in its own assembly, so a half copied install only shows up once the
-            // first packet is built. Load it here instead, where it can still be reported properly
+            // Load the packet assembly now, so a broken install is reported here and not on the first send
             try
             {
                 ProbePacketAssembly();
@@ -34,8 +33,7 @@ namespace Tosox.CatchChamberedRounds.Fika
                 return;
             }
 
-            // The explicit delegates are required. Without them the compiler caches them in a generated
-            // class that the game walks while loading types, which force loads Fika.Core
+            // Explicit delegates, since cached lambdas land in a class that loads Fika.Core too early
             FikaEventDispatcher.SubscribeEvent(new Action<FikaNetworkManagerCreatedEvent>(OnNetworkManagerCreated));
             FikaEventDispatcher.SubscribeEvent(new Action<FikaGameEndedEvent>(OnGameEnded));
 
@@ -48,13 +46,12 @@ namespace Tosox.CatchChamberedRounds.Fika
 
         private static void OnNetworkManagerCreated(FikaNetworkManagerCreatedEvent args)
         {
-            // Covers both roles, since the host has to receive the clients' packets as well
             args.Manager.RegisterPacket(new Action<CatchRoundPacket>(OnPacketReceived));
         }
 
         private static void OnGameEnded(FikaGameEndedEvent args)
         {
-            // A transit keeps the same raid going, so anything still in flight stays valid
+            // A transit continues the same raid
             if (args.ExitStatus == ExitStatus.Transit)
                 return;
 
@@ -85,7 +82,7 @@ namespace Tosox.CatchChamberedRounds.Fika
 
             var packet = CatchRoundPacket.Create(kind, ModInfo.Version, profileId, roundId, fastHide);
 
-            // Broadcasting reaches every client from the host and gets relayed by the host from a client
+            // Broadcast, so the host also relays a client's packet to everyone
             manager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
         }
 
@@ -124,7 +121,6 @@ namespace Tosox.CatchChamberedRounds.Fika
                 ObservedCatch.Play(player, roundId);
         }
 
-        // Fika's own list of humans, so a bot can never be handed anything
         private static FikaPlayer FindHuman(string profileId)
         {
             var handler = Singleton<IFikaNetworkManager>.Instance?.CoopHandler;
@@ -162,13 +158,11 @@ namespace Tosox.CatchChamberedRounds.Fika
                 + "Catching is off for this raid because different versions may handle the chambered round differently.",
                 ENotificationDurationType.Long);
 
-            // The other client cannot see our version until we send it something, so answer once. Both
-            // sides go quiet after their own warning, which keeps this from bouncing back and forth.
+            // Reply once so the other side learns our version. Each side warns only once, so no loop
             Send(CatchRoundPacket.KindCatch, null, null);
         }
 
-        // Kept out of Init so the failed type load surfaces as an exception there rather than
-        // while Init itself is being compiled
+        // Separate method so a missing assembly throws when called, not when Init is compiled
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ProbePacketAssembly()
         {

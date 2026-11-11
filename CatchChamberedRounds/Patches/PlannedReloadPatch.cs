@@ -32,16 +32,14 @@ namespace Tosox.CatchChamberedRounds.Patches
         {
             var planned = __instance._plannedAction;
 
-            // Only the action this call put there, never one that was already waiting
+            // Only wrap an action this call created
             if (!__state || planned == null)
                 return;
 
-            // A reload pressed while the weapon is still firing is deferred until the shot is over
-            // and the deferred call starts the reload itself instead of passing the idle operation
+            // A reload pressed mid-shot is deferred, and the deferred call skips the patched idle operation
             __instance._plannedAction = () =>
             {
-                // CanStartReload still asks the fire operation, which refuses for as long as it holds
-                // a planned action, so the action takes itself down before asking for a reload
+                // CanStartReload refuses while a planned action is set, so clear it first
                 __instance._plannedAction = null;
 
                 try

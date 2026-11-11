@@ -23,12 +23,10 @@ namespace Tosox.CatchChamberedRounds.Patches
         {
             try
             {
-                // Skip the vanilla throw only when the round is safely in the player's gear
                 return !CartridgeCatcher.TryCatch(patron, player, source);
             }
             catch (Exception ex)
             {
-                // Never let a mistake here eat a round or wedge a reload
                 Logger.LogError($"Failed to catch cartridge from '{source}': {ex}");
                 return true;
             }

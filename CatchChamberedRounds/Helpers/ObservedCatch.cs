@@ -21,11 +21,11 @@ namespace Tosox.CatchChamberedRounds.Helpers
                 if (weapon == null || !weapon.HasChambers)
                     return;
 
-                // Nothing to play if this client's copy of the weapon holds something else by now
+                // This client's chamber may already hold a different round
                 if (!(weapon.Chambers[0].ContainedItem is Ammo chambered) || chambered.Id != roundId)
                     return;
 
-                // Read the same way the owner read it, so this client splices exactly where they do
+                // Read like the owner does, so both splice at the same point
                 var profile = AnimatorProfile.Read(controller.FirearmsAnimator.UnityAnimator());
 
                 controller.InitiateOperation<ObservedCatchOperation>()
@@ -40,8 +40,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             }
         }
 
-        // Fika's own abort goes through SetTriggerPressed, which refuses until the first round is
-        // in, so a swap before that one never reaches the other clients
+        // Fika's abort goes through SetTriggerPressed, which is ignored until the first round is in
         internal static void AbortReload(Player player, bool fastHide)
         {
             if (!(player?.HandsController is Player.FirearmController controller))
@@ -50,8 +49,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (!(controller.CurrentOperation is Player.FirearmController.ReloadInternalMagBase reload))
                 return;
 
-            // The override sets the abort flag and the base stashes the hide, so the reload also puts
-            // the weapon away on its way out instead of finishing into an idle that waits for Fika
+            // Also hide the weapon as the reload ends, instead of idling until Fika catches up
             reload.ReloadAborted = true;
             reload.HideWeapon(() => { }, fastHide);
 
