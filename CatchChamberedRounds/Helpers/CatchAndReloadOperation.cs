@@ -58,6 +58,7 @@ namespace Tosox.CatchChamberedRounds.Helpers
             _spliced = false;
             _spliceAttempted = false;
 
+            // No address, it would only raise the load-one flag and start the left hand on a feed
             Start(chambered, 0, null, new Callback(OnDischargeFinished));
 
             MarkWeapon();

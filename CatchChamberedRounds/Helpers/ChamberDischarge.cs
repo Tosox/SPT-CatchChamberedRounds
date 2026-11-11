@@ -47,10 +47,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (weapon == null || !weapon.MustBoltBeOpennedForInternalReload)
                 return Decline("weapon does not open its bolt for an internal reload");
 
-            // Puts the animator's LoadOne flag back down, which otherwise stays up for as long as
-            // the weapon is in hand and wedges an empty one into an uninterruptible load-a-round loop
-            controller.FirearmsAnimator?.LoadOneTrigger(false);
-
             if (!weapon.HasChambers || weapon.ChamberAmmoCount <= 0)
                 return Decline($"nothing chambered (HasChambers={weapon.HasChambers}, ChamberAmmoCount={weapon.ChamberAmmoCount})");
 
@@ -110,10 +106,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             if (preview.Failed || preview.Value == null)
                 return Decline($"nowhere to put the round ({preview.Error?.ToString() ?? "no result"})");
 
-            var destination = InventoryPlacement.AddressOf(preview.Value);
-            if (destination == null)
-                return Decline($"could not read an address out of a {preview.Value.GetType().FullName}");
-
             // Never let a stale bypass from an earlier reload leak into this one
             _bypassArmed = false;
 
@@ -121,10 +113,8 @@ namespace Tosox.CatchChamberedRounds.Helpers
             ReloadSplice.Clear();
 
             if (Settings.VerboseLogging.Value)
-                Plugin.Log.LogInfo($"Catch starting: discharging {chambered.LocalizedName()} to {destination}");
+                Plugin.Log.LogInfo($"Catch starting: discharging {chambered.LocalizedName()}");
 
-            // The discharge is not told where the round is going. An address would raise the load
-            // one flag, which starts the left hand on a feed the catch is about to replace
             var discharge = controller.InitiateOperation<CatchAndReloadOperation>();
             discharge.StartCatch(chambered, inventory, ammoPack, profile, callback, startCallback);
 

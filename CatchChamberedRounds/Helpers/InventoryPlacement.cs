@@ -16,17 +16,6 @@ namespace Tosox.CatchChamberedRounds.Helpers
             return ItemManipulator.QuickFindAppropriatePlace(patron, controller, targets, Order, simulate);
         }
 
-        internal static ItemAddress AddressOf(IItemOperationResult placement)
-        {
-            if (placement is IToEmptyAddressResult move)
-                return move.To;
-
-            if (placement is ITransferOrMergeResult merge)
-                return merge.TargetItem?.Parent;
-
-            return null;
-        }
-
         internal static bool Commit(Item patron, InventoryController controller)
         {
             // Placement helpers all read Item.Parent, which throws instead of returning null.
